@@ -1,5 +1,12 @@
 # Inventori Gudang
 
+⚠️ **INFORMASI BRANCH BARU (v2):** 
+Aplikasi ini telah di-upgrade secara masif ke versi **Gudang v2** dengan arsitektur standar industri, keamanan ketat, dan performa optimal. Seluruh hasil perbaikan v2 dideploy di branch **`putra`**.
+
+👉 **[Lihat Gudang v2 di Branch `putra`](../tree/putra)**
+
+---
+
 Aplikasi pencatatan barang dan lokasi gudang. Dibuat untuk membantu menemukan barang tanpa bertanya ke orang lain.
 
 ## Masalah
@@ -110,6 +117,18 @@ Setup saat ini **belum lengkap** dan memiliki beberapa risiko:
 - Transaksi stok belum atomik
 
 **Untuk detail lengkap masalah dan rencana perbaikan, baca [docs/audit.md](docs/audit.md).**
+
+### 🚀 Spill Perbaikan di Gudang v2 (Branch `putra`)
+
+| Fitur / Isu | Versi 1 (Prototipe) | Versi 2 (Standard Industri - Branch `putra`) | Status |
+| --- | --- | --- | --- |
+| **Database** | MySQL lokal (raw connection) | PostgreSQL + Neon Serverless (Cloud-native ready) | Migrasi Sukses |
+| **Transaksi Stok** | Query terpisah (tidak atomik, rawan stok negatif) | Transaksi atomik `Serializable` dengan retry otomatis pada konflik concurrency | Diselesaikan |
+| **Input SKU** | Input manual (rawan duplikasi dan tidak konsisten) | **Auto-Generate SKU** dinamis berdasarkan prefix kategori barang database | Diselesaikan |
+| **Denah Gudang** | Visual statis (dot lokasi tidak pas) | CRUD Lokasi dinamis dengan visual koordinat `x/y` persen tepat pada grid | Diselesaikan |
+| **Keamanan (Auth)** | Tanpa autentikasi (publik bebas ubah) | Cookie-based session terenkripsi (Web Crypto API) & Role-based Access | Diselesaikan |
+| **Aksesibilitas** | Navigasi mouse only, elemen non-semantik | Focus keyboard, tombol semantik, label ARIA, bahasa ID | Diselesaikan |
+| **CI/CD Quality Gate** | Tanpa test & linting rusak | GitHub Actions otomatis (ESLint, Typecheck, 9 Unit + Integration Tests) | Diselesaikan |
 
 ## Dokumentasi
 

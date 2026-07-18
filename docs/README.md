@@ -1,5 +1,11 @@
 # Dokumentasi Inventori Gudang
 
+⚠️ **PENGUMUMAN:** Dokumentasi terbaru untuk arsitektur v2 (kategori dinamis, CRUD lokasi, session security, deploy Vercel) telah diperbarui secara lengkap pada branch **`putra`** di folder `inventori-gudang-v2/docs/`.
+
+👉 **[Buka Dokumentasi v2 di Branch `putra`](../../tree/putra/inventori-gudang-v2/docs)**
+
+---
+
 Folder ini adalah konteks proyek. Baca sebelum mengubah fitur, skema database, atau konfigurasi.
 
 ## Urutan baca
