@@ -82,6 +82,14 @@ Setiap item harus punya:
 
 **Verifikasi sprint:** pull request contoh lulus CI; pengguna tanpa role tulis ditolak.
 
+## Sprint 5 - Pembaharuan PRD: Banyak Gudang
+
+**Tujuan: menyesuaikan kode dengan PRD yang baru.**
+
+|Item|Status|Bukti Selesai|
+|---|---|---|
+|Banyak gudang|belum dikerjakan|Admin gudang dapat menambahkan banyak `Gudang`, dan setiap `Gudang` dapat memiliki `rows` dan `cols` masing-masing; Petugas gudang dapat memilih `Gudang` dan `Grid` saat melakukan input data barang; Atribut Gudang adalah `name`, `rows`, dan `cols`; Atribut `Grid` adalah `code`, `gudang_id`|
+
 ## Definition of Ready
 
 Pekerjaan boleh mulai bila kebutuhan, aturan bisnis, dampak data, dan cara verifikasi sudah jelas. Bila tidak jelas, tambahkan pertanyaan ke PRD atau buat item eksplorasi kecil.
