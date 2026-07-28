@@ -1,7 +1,7 @@
 import { Boxes, MapPin, ArrowUpRight, History, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { warehouseRacks } from '@/lib/warehouse';
+import { mockWarehouses } from '@/lib/warehouse';
 
 const iconMap = { Boxes, MapPin, History };
 
@@ -31,6 +31,7 @@ function formatMovementLocation(
 export default async function Dashboard() {
   let totalItems = 0;
   let locationsUsed = 0;
+  let totalGridCount = 21;
   let todayMovements = 0;
   let activities: Array<{
     id: number;
@@ -43,24 +44,26 @@ export default async function Dashboard() {
   }> = [];
 
   try {
-    const [itemCount, usedLocations, movements] = await Promise.all([
+    const [itemCount, usedGrids, totalGrids, movements] = await Promise.all([
       prisma.item.count({ where: { isActive: true } }),
-      prisma.warehouseLocation.count({
+      prisma.grid.count({
         where: { stockBalancesHere: { some: { quantity: { gt: 0 } } } },
       }),
+      prisma.grid.count({ where: { isActive: true } }),
       prisma.stockMovement.findMany({
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: {
           item: { select: { name: true, unit: true } },
-          sourceLocation: { select: { code: true } },
-          destinationLocation: { select: { code: true } },
+          sourceGrid: { select: { code: true } },
+          destinationGrid: { select: { code: true } },
         },
       }),
     ]);
 
     totalItems = itemCount;
-    locationsUsed = usedLocations;
+    locationsUsed = usedGrids;
+    if (totalGrids > 0) totalGridCount = totalGrids;
 
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -76,26 +79,26 @@ export default async function Dashboard() {
       unit: m.item.unit,
       location: formatMovementLocation(
         m.type,
-        m.sourceLocation?.code ?? null,
-        m.destinationLocation?.code ?? null,
+        m.sourceGrid?.code ?? null,
+        m.destinationGrid?.code ?? null,
       ),
       time: formatRelativeTime(m.createdAt),
     }));
   } catch {
     totalItems = 142;
     locationsUsed = 18;
+    totalGridCount = mockWarehouses.reduce((sum, w) => sum + w.grids.length, 0);
     todayMovements = 32;
     activities = [
-      { id: 1, type: 'IN', item: 'Kursi Kantor Ergonomis', qty: 25, unit: 'pcs', location: 'A-02', time: '10 menit lalu' },
-      { id: 2, type: 'OUT', item: 'Meja Lipat Kayu', qty: 10, unit: 'pcs', location: 'B-04', time: '45 menit lalu' },
-      { id: 3, type: 'TRANSFER', item: 'Lampu LED Phillips', qty: 50, unit: 'box', location: 'C-01 ke A-02', time: '2 jam lalu' },
+      { id: 1, type: 'IN', item: 'Kursi Kantor Ergonomis', qty: 25, unit: 'pcs', location: 'G1-R1-C2', time: '10 menit lalu' },
+      { id: 2, type: 'OUT', item: 'Meja Lipat Kayu', qty: 10, unit: 'pcs', location: 'G1-R2-C1', time: '45 menit lalu' },
+      { id: 3, type: 'TRANSFER', item: 'Lampu LED Phillips', qty: 50, unit: 'box', location: 'G1-R3-C3 ke G2-R1-C1', time: '2 jam lalu' },
     ];
   }
 
-  const totalRacks = warehouseRacks.length;
   const stats = [
     { name: 'Total Item Unik', value: totalItems.toString(), unit: 'Barang', icon: 'Boxes', gradient: 'from-blue-500 to-indigo-600 shadow-blue-500/10' },
-    { name: 'Lokasi Terpakai', value: `${locationsUsed}/${totalRacks}`, unit: 'Rak', icon: 'MapPin', gradient: 'from-emerald-500 to-teal-600 shadow-emerald-500/10' },
+    { name: 'Grid Terpakai', value: `${locationsUsed}/${totalGridCount}`, unit: 'Grid', icon: 'MapPin', gradient: 'from-emerald-500 to-teal-600 shadow-emerald-500/10' },
     { name: 'Mutasi Hari Ini', value: todayMovements.toString(), unit: 'Transaksi', icon: 'History', gradient: 'from-amber-500 to-orange-600 shadow-amber-500/10' },
   ];
 
@@ -104,7 +107,7 @@ export default async function Dashboard() {
       {/* Welcome Banner */}
       <div className='flex flex-col gap-2'>
         <h1 className='text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent'>Dashboard Inventori</h1>
-        <p className='text-zinc-400 text-sm'>Selamat datang di sistem manajemen stok gudang v2. Berikut adalah ringkasan hari ini.</p>
+        <p className='text-zinc-400 text-sm'>Selamat datang di sistem manajemen stok gudang & grid. Berikut adalah ringkasan hari ini.</p>
       </div>
 
       {/* Stats Grid - Linear Gradient & Shadows */}
@@ -146,7 +149,7 @@ export default async function Dashboard() {
               <div key={a.id} className='py-4.5 first:pt-0 last:pb-0 flex items-center justify-between'>
                 <div className='flex flex-col gap-1'>
                   <span className='font-semibold text-sm text-zinc-100'>{a.item}</span>
-                  <span className='text-xs text-zinc-500 font-medium'>Lokasi: <span className='text-zinc-300 font-semibold'>{a.location}</span> &bull; {a.time}</span>
+                  <span className='text-xs text-zinc-500 font-medium'>Grid: <span className='text-zinc-300 font-semibold'>{a.location}</span> &bull; {a.time}</span>
                 </div>
                 <div className='flex items-center gap-3'>
                   <span className={'text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ' + (
@@ -170,10 +173,10 @@ export default async function Dashboard() {
           <div className='flex flex-col gap-4'>
             <div className='flex items-center gap-2'>
               <ShieldAlert className='h-5 w-5 text-amber-500' />
-              <h2 className='font-bold text-lg text-white'>Status Integrasi</h2>
+              <h2 className='font-bold text-lg text-white'>Status Multi-Gudang</h2>
             </div>
             <p className='text-sm text-zinc-400 leading-relaxed'>
-              Proyek ini menggunakan **Vercel Postgres (Neon Serverless)**. Pastikan environment variables database telah dikonfigurasi di dashboard Vercel Anda.
+              Sistem telah mendukung **Banyak Gudang** dan **Grid Matrix (Rows x Cols)**. Data mutasi tersimpan secara terstruktur per Grid.
             </p>
           </div>
 
@@ -182,7 +185,7 @@ export default async function Dashboard() {
               Catat Mutasi Stok
             </Link>
             <Link href='/locations' className='w-full py-3 bg-zinc-800 hover:bg-zinc-750 text-zinc-100 rounded-xl font-bold text-sm text-center block transition-all border border-zinc-700/50'>
-              Cek Denah Gudang
+              Kelola Gudang & Grid Denah
             </Link>
           </div>
         </div>

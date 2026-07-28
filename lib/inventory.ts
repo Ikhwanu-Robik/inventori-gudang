@@ -1,6 +1,5 @@
 import { Prisma, type PrismaClient } from '../app/generated/prisma/index.js';
 import { itemSchema } from './schemas';
-import { getWarehouseRack } from './warehouse';
 import { z } from 'zod';
 
 const movementTypeSchema = z.enum(['IN', 'OUT', 'TRANSFER']);
@@ -96,7 +95,7 @@ export function parseInventoryMutationForm(
       type: typeResult.data,
       locationCode,
       destinationLocationCode: destinationLocationCode || undefined,
-      createdById: 0, // placeholder, will be replaced with user session ID at the actions layer
+      createdById: 0,
     },
   };
 }
@@ -105,17 +104,30 @@ export function hasSufficientStock(availableQuantity: number | undefined, reques
   return (availableQuantity ?? 0) >= requestedQuantity;
 }
 
-async function getLocation(
+async function getGrid(
   tx: Prisma.TransactionClient,
   code: string,
 ): Promise<{ id: number } | null> {
-  const rack = getWarehouseRack(code);
-  if (!rack) return null;
+  const existingGrid = await tx.grid.findUnique({
+    where: { code: code.toUpperCase() },
+    select: { id: true },
+  });
 
-  return tx.warehouseLocation.upsert({
-    where: { code: rack.code },
-    create: rack,
-    update: {},
+  if (existingGrid) return existingGrid;
+
+  let warehouse = await tx.warehouse.findFirst();
+  if (!warehouse) {
+    warehouse = await tx.warehouse.create({
+      data: { name: 'Gudang Utama', rows: 4, cols: 3 },
+    });
+  }
+
+  return tx.grid.create({
+    data: {
+      code: code.toUpperCase(),
+      warehouseId: warehouse.id,
+      isActive: true,
+    },
     select: { id: true },
   });
 }
@@ -152,15 +164,15 @@ async function executeInventoryMutation(
     itemId = existingItem.id;
   }
 
-  const sourceLocation = await getLocation(tx, input.locationCode);
-  if (!sourceLocation) {
-    return failure(`Lokasi ${input.locationCode} tidak terdaftar pada denah gudang.`);
+  const sourceGrid = await getGrid(tx, input.locationCode);
+  if (!sourceGrid) {
+    return failure(`Grid ${input.locationCode} tidak terdaftar pada denah gudang.`);
   }
 
   if (input.type === 'IN') {
     await tx.stockBalance.upsert({
-      where: { itemId_locationId: { itemId, locationId: sourceLocation.id } },
-      create: { itemId, locationId: sourceLocation.id, quantity: input.quantity },
+      where: { itemId_gridId: { itemId, gridId: sourceGrid.id } },
+      create: { itemId, gridId: sourceGrid.id, quantity: input.quantity },
       update: { quantity: { increment: input.quantity } },
     });
     await tx.stockMovement.create({
@@ -168,7 +180,7 @@ async function executeInventoryMutation(
         itemId,
         type: 'IN',
         quantity: input.quantity,
-        destinationLocationId: sourceLocation.id,
+        destinationGridId: sourceGrid.id,
         note: input.note ?? 'Barang masuk',
         createdById: input.createdById,
       },
@@ -180,7 +192,7 @@ async function executeInventoryMutation(
   const reducedBalance = await tx.stockBalance.updateMany({
     where: {
       itemId,
-      locationId: sourceLocation.id,
+      gridId: sourceGrid.id,
       quantity: { gte: input.quantity },
     },
     data: { quantity: { decrement: input.quantity } },
@@ -188,11 +200,11 @@ async function executeInventoryMutation(
 
   if (reducedBalance.count !== 1) {
     const balance = await tx.stockBalance.findUnique({
-      where: { itemId_locationId: { itemId, locationId: sourceLocation.id } },
+      where: { itemId_gridId: { itemId, gridId: sourceGrid.id } },
       select: { quantity: true },
     });
     return failure(
-      `Stok di Rak ${input.locationCode} tidak cukup. Tersedia: ${balance?.quantity ?? 0}.`,
+      `Stok di Grid ${input.locationCode} tidak cukup. Tersedia: ${balance?.quantity ?? 0}.`,
     );
   }
 
@@ -202,7 +214,7 @@ async function executeInventoryMutation(
         itemId,
         type: 'OUT',
         quantity: input.quantity,
-        sourceLocationId: sourceLocation.id,
+        sourceGridId: sourceGrid.id,
         note: input.note ?? 'Barang keluar',
         createdById: input.createdById,
       },
@@ -211,14 +223,14 @@ async function executeInventoryMutation(
     return { success: true, itemId };
   }
 
-  const destinationLocation = await getLocation(tx, input.destinationLocationCode ?? '');
-  if (!destinationLocation) {
+  const destinationGrid = await getGrid(tx, input.destinationLocationCode ?? '');
+  if (!destinationGrid) {
     throw new Error('Lokasi tujuan tidak valid setelah validasi transaksi.');
   }
 
   await tx.stockBalance.upsert({
-    where: { itemId_locationId: { itemId, locationId: destinationLocation.id } },
-    create: { itemId, locationId: destinationLocation.id, quantity: input.quantity },
+    where: { itemId_gridId: { itemId, gridId: destinationGrid.id } },
+    create: { itemId, gridId: destinationGrid.id, quantity: input.quantity },
     update: { quantity: { increment: input.quantity } },
   });
   await tx.stockMovement.create({
@@ -226,8 +238,8 @@ async function executeInventoryMutation(
       itemId,
       type: 'TRANSFER',
       quantity: input.quantity,
-      sourceLocationId: sourceLocation.id,
-      destinationLocationId: destinationLocation.id,
+      sourceGridId: sourceGrid.id,
+      destinationGridId: destinationGrid.id,
       note: input.note ?? 'Transfer lokasi',
       createdById: input.createdById,
     },

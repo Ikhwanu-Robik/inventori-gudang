@@ -49,7 +49,7 @@ describeIntegration('mutasi stok PostgreSQL', () => {
       unit: 'pcs',
       quantity: 10,
       type: 'IN',
-      locationCode: 'A-01',
+      locationCode: 'G1-R1-C1',
       createdById: testUser.id,
     });
     expect(incoming.success).toBe(true);
@@ -63,7 +63,7 @@ describeIntegration('mutasi stok PostgreSQL', () => {
         unit: '',
         quantity: 6,
         type: 'OUT',
-        locationCode: 'A-01',
+        locationCode: 'G1-R1-C1',
         createdById: testUser.id,
       }),
       persistInventoryMutation(prisma, {
@@ -72,7 +72,7 @@ describeIntegration('mutasi stok PostgreSQL', () => {
         unit: '',
         quantity: 6,
         type: 'OUT',
-        locationCode: 'A-01',
+        locationCode: 'G1-R1-C1',
         createdById: testUser.id,
       }),
     ]);
@@ -80,7 +80,7 @@ describeIntegration('mutasi stok PostgreSQL', () => {
     expect([firstOut.success, secondOut.success].filter(Boolean)).toHaveLength(1);
 
     const sourceBalance = await prisma.stockBalance.findFirst({
-      where: { itemId, location: { code: 'A-01' } },
+      where: { itemId, grid: { code: 'G1-R1-C1' } },
       select: { quantity: true },
     });
     expect(sourceBalance?.quantity).toBe(4);
@@ -91,20 +91,20 @@ describeIntegration('mutasi stok PostgreSQL', () => {
       unit: '',
       quantity: 3,
       type: 'TRANSFER',
-      locationCode: 'A-01',
-      destinationLocationCode: 'B-01',
+      locationCode: 'G1-R1-C1',
+      destinationLocationCode: 'G1-R1-C2',
       createdById: testUser.id,
     });
     expect(transfer.success).toBe(true);
 
     const balances = await prisma.stockBalance.findMany({
       where: { itemId },
-      include: { location: { select: { code: true } } },
+      include: { grid: { select: { code: true } } },
     });
     expect(balances).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ quantity: 1, location: { code: 'A-01' } }),
-        expect.objectContaining({ quantity: 3, location: { code: 'B-01' } }),
+        expect.objectContaining({ quantity: 1, grid: { code: 'G1-R1-C1' } }),
+        expect.objectContaining({ quantity: 3, grid: { code: 'G1-R1-C2' } }),
       ]),
     );
   });

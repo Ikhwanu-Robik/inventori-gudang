@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { mockWarehouses } from '@/lib/warehouse';
 
 export async function getActiveCategories(): Promise<Array<{ code: string; name: string }>> {
   try {
@@ -10,7 +11,6 @@ export async function getActiveCategories(): Promise<Array<{ code: string; name:
       select: { code: true, name: true },
     });
   } catch {
-    // Fallback static jika db offline
     return [
       { code: 'KRS', name: 'Kursi' },
       { code: 'MJA', name: 'Meja' },
@@ -20,31 +20,59 @@ export async function getActiveCategories(): Promise<Array<{ code: string; name:
   }
 }
 
+export async function getActiveWarehousesWithGrids(): Promise<
+  Array<{
+    id: number;
+    name: string;
+    rows: number;
+    cols: number;
+    grids: Array<{ id: number; code: string; row?: number | null; col?: number | null; isActive: boolean }>;
+  }>
+> {
+  try {
+    const warehouses = await prisma.warehouse.findMany({
+      include: {
+        grids: {
+          where: { isActive: true },
+          orderBy: [{ row: 'asc' }, { col: 'asc' }, { code: 'asc' }],
+          select: { id: true, code: true, row: true, col: true, isActive: true },
+        },
+      },
+      orderBy: { id: 'asc' },
+    });
+
+    if (warehouses.length > 0) return warehouses;
+    return mockWarehouses;
+  } catch {
+    return mockWarehouses;
+  }
+}
+
 export async function getActiveLocations(): Promise<
   Array<{ code: string; name: string; xPercent: number | null; yPercent: number | null; isActive: boolean }>
 > {
   try {
-    return await prisma.warehouseLocation.findMany({
+    const grids = await prisma.grid.findMany({
       where: { isActive: true },
       orderBy: { code: 'asc' },
-      select: { code: true, name: true, xPercent: true, yPercent: true, isActive: true },
+      select: { code: true, isActive: true },
     });
+
+    return grids.map((g) => ({
+      code: g.code,
+      name: `Grid ${g.code}`,
+      xPercent: null,
+      yPercent: null,
+      isActive: g.isActive,
+    }));
   } catch {
-    // Fallback static jika db offline (A-01 sampai C-04)
-    return [
-      { code: 'A-01', name: 'Rak A-01', xPercent: 17, yPercent: 12.5, isActive: true },
-      { code: 'A-02', name: 'Rak A-02', xPercent: 17, yPercent: 37.5, isActive: true },
-      { code: 'A-03', name: 'Rak A-03', xPercent: 17, yPercent: 62.5, isActive: true },
-      { code: 'A-04', name: 'Rak A-04', xPercent: 17, yPercent: 87.5, isActive: true },
-      { code: 'B-01', name: 'Rak B-01', xPercent: 50, yPercent: 12.5, isActive: true },
-      { code: 'B-02', name: 'Rak B-02', xPercent: 50, yPercent: 37.5, isActive: true },
-      { code: 'B-03', name: 'Rak B-03', xPercent: 50, yPercent: 62.5, isActive: true },
-      { code: 'B-04', name: 'Rak B-04', xPercent: 50, yPercent: 87.5, isActive: true },
-      { code: 'C-01', name: 'Rak C-01', xPercent: 83, yPercent: 12.5, isActive: true },
-      { code: 'C-02', name: 'Rak C-02', xPercent: 83, yPercent: 37.5, isActive: true },
-      { code: 'C-03', name: 'Rak C-03', xPercent: 83, yPercent: 62.5, isActive: true },
-      { code: 'C-04', name: 'Rak C-04', xPercent: 83, yPercent: 87.5, isActive: true },
-    ];
+    return mockWarehouses[0].grids.map((g) => ({
+      code: g.code,
+      name: `Grid ${g.code}`,
+      xPercent: null,
+      yPercent: null,
+      isActive: g.isActive,
+    }));
   }
 }
 

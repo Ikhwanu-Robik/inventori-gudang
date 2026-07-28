@@ -1,11 +1,19 @@
 export const dynamic = 'force-dynamic';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
-import { Boxes, MapPin, ArrowLeft, History, AlertCircle } from 'lucide-react';
+import { Boxes, ArrowLeft, History, AlertCircle, Building2 } from 'lucide-react';
 import Link from 'next/link';
 
-type BalItem = { quantity: number; location: { code: string } | null };
-type MoveItem = { id: number; type: string; quantity: number; createdAt: Date; note: string | null; sourceLocation: { code: string } | null; destinationLocation: { code: string } | null };
+type BalItem = { quantity: number; grid: { code: string; warehouse?: { name: string } | null } | null };
+type MoveItem = {
+  id: number;
+  type: string;
+  quantity: number;
+  createdAt: Date;
+  note: string | null;
+  sourceGrid: { code: string } | null;
+  destinationGrid: { code: string } | null;
+};
 type ItemDetail = { id: number; sku: string; name: string; unit: string; stockBalances: BalItem[]; stockMovements: MoveItem[] };
 
 const MOCK_ITEMS: Record<string, ItemDetail> = {
@@ -15,33 +23,14 @@ const MOCK_ITEMS: Record<string, ItemDetail> = {
     name: 'Kursi Kantor Ergonomis',
     unit: 'pcs',
     stockBalances: [
-      { quantity: 25, location: { code: 'A-02' } },
-      { quantity: 12, location: { code: 'B-01' } },
+      { quantity: 25, grid: { code: 'G1-R1-C2', warehouse: { name: 'Gudang Utama' } } },
+      { quantity: 12, grid: { code: 'G2-R1-C1', warehouse: { name: 'Gudang Cadangan' } } },
     ],
     stockMovements: [
-      { id: 101, type: 'IN', quantity: 25, createdAt: new Date(Date.now() - 600000), note: 'Barang masuk dari supplier', sourceLocation: null, destinationLocation: { code: 'A-02' } },
-      { id: 102, type: 'IN', quantity: 12, createdAt: new Date(Date.now() - 3600000), note: 'Stok tambahan', sourceLocation: null, destinationLocation: { code: 'B-01' } },
+      { id: 101, type: 'IN', quantity: 25, createdAt: new Date(Date.now() - 600000), note: 'Barang masuk dari supplier', sourceGrid: null, destinationGrid: { code: 'G1-R1-C2' } },
+      { id: 102, type: 'IN', quantity: 12, createdAt: new Date(Date.now() - 3600000), note: 'Stok tambahan', sourceGrid: null, destinationGrid: { code: 'G2-R1-C1' } },
     ],
   },
-  '2': {
-    id: 2,
-    sku: 'MJA-B04',
-    name: 'Meja Lipat Kayu',
-    unit: 'pcs',
-    stockBalances: [
-      { quantity: 15, location: { code: 'B-04' } },
-    ],
-    stockMovements: [
-      { id: 201, type: 'IN', quantity: 25, createdAt: new Date(Date.now() - 7200000), note: 'Penerimaan awal', sourceLocation: null, destinationLocation: { code: 'B-04' } },
-      { id: 202, type: 'OUT', quantity: 10, createdAt: new Date(Date.now() - 2700000), note: 'Pengeluaran proyek A', sourceLocation: { code: 'B-04' }, destinationLocation: null },
-    ],
-  },
-};
-
-const RACK_COORDINATES: Record<string, { x: number; y: number }> = {
-  'A-01': { x: 17, y: 12.5 }, 'A-02': { x: 17, y: 37.5 }, 'A-03': { x: 17, y: 62.5 }, 'A-04': { x: 17, y: 87.5 },
-  'B-01': { x: 50, y: 12.5 }, 'B-02': { x: 50, y: 37.5 }, 'B-03': { x: 50, y: 62.5 }, 'B-04': { x: 50, y: 87.5 },
-  'C-01': { x: 83, y: 12.5 }, 'C-02': { x: 83, y: 37.5 }, 'C-03': { x: 83, y: 62.5 }, 'C-04': { x: 83, y: 87.5 },
 };
 
 export default async function ItemDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -53,9 +42,9 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
     const dbItem = await prisma.item.findUnique({
       where: { id: Number(id) },
       include: {
-        stockBalances: { include: { location: true } },
+        stockBalances: { include: { grid: { include: { warehouse: true } } } },
         stockMovements: {
-          include: { sourceLocation: true, destinationLocation: true },
+          include: { sourceGrid: true, destinationGrid: true },
           orderBy: { createdAt: 'desc' },
         },
       },
@@ -67,18 +56,18 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
         sku: dbItem.sku,
         name: dbItem.name,
         unit: dbItem.unit,
-        stockBalances: dbItem.stockBalances.map(b => ({
+        stockBalances: dbItem.stockBalances.map((b) => ({
           quantity: b.quantity,
-          location: b.location ? { code: b.location.code } : null,
+          grid: b.grid ? { code: b.grid.code, warehouse: b.grid.warehouse ? { name: b.grid.warehouse.name } : null } : null,
         })),
-        stockMovements: dbItem.stockMovements.map(m => ({
+        stockMovements: dbItem.stockMovements.map((m) => ({
           id: m.id,
           type: m.type,
           quantity: m.quantity,
           createdAt: m.createdAt,
           note: m.note,
-          sourceLocation: m.sourceLocation ? { code: m.sourceLocation.code } : null,
-          destinationLocation: m.destinationLocation ? { code: m.destinationLocation.code } : null,
+          sourceGrid: m.sourceGrid ? { code: m.sourceGrid.code } : null,
+          destinationGrid: m.destinationGrid ? { code: m.destinationGrid.code } : null,
         })),
       };
     }
@@ -118,23 +107,27 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
 
       {/* Main Grid */}
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
-        {/* Info & Peta */}
+        {/* Info & Saldo */}
         <div className='lg:col-span-2 flex flex-col gap-8'>
           {/* Stock Balances */}
           <div className='bg-zinc-900 rounded-2xl border border-zinc-800 p-6 shadow-lg flex flex-col gap-4'>
-            <h2 className='font-bold text-lg text-white flex items-center gap-2'><Boxes className='h-5 w-5 text-indigo-400' /> Saldo & Lokasi Penyimpanan</h2>
+            <h2 className='font-bold text-lg text-white flex items-center gap-2'><Boxes className='h-5 w-5 text-indigo-400' /> Saldo & Lokasi Grid Gudang</h2>
             <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2'>
-              <div className='p-4.5 rounded-xl bg-zinc-850 border border-zinc-800 flex flex-col justify-between min-h-24'>
-                <span className='text-xs font-semibold text-zinc-500 uppercase tracking-wider'>Total Seluruh Stok</span>
+              <div className='p-4.5 rounded-xl bg-zinc-950 border border-zinc-800 flex flex-col justify-between min-h-24'>
+                <span className='text-xs font-semibold text-zinc-400 uppercase tracking-wider'>Total Seluruh Stok</span>
                 <span className='text-3xl font-black text-white mt-2'>{totalStock} <span className='text-sm font-medium text-zinc-400'>{item.unit}</span></span>
               </div>
-              <div className='p-4.5 rounded-xl bg-zinc-850 border border-zinc-800 flex flex-col gap-2'>
-                <span className='text-xs font-semibold text-zinc-500 uppercase tracking-wider'>Distribusi per Rak</span>
-                <div className='flex flex-col gap-1.5 mt-1 overflow-y-auto max-h-24'>
+              <div className='p-4.5 rounded-xl bg-zinc-950 border border-zinc-800 flex flex-col gap-2'>
+                <span className='text-xs font-semibold text-zinc-400 uppercase tracking-wider'>Distribusi per Gudang & Grid</span>
+                <div className='flex flex-col gap-1.5 mt-1 overflow-y-auto max-h-32'>
                   {item.stockBalances.map((bal, idx) => (
-                    <div key={idx} className='flex items-center justify-between text-xs font-semibold'>
-                      <span className='text-zinc-400'>Rak {bal.location?.code}</span>
-                      <span className='text-white'>{bal.quantity} {item.unit}</span>
+                    <div key={idx} className='flex items-center justify-between text-xs font-semibold border-b border-zinc-800/40 pb-1'>
+                      <div className='flex items-center gap-1.5'>
+                        <Building2 className='h-3.5 w-3.5 text-indigo-400' />
+                        <span className='text-zinc-300'>{bal.grid?.warehouse?.name ?? 'Gudang'}</span>
+                        <span className='font-mono bg-zinc-800 px-1.5 py-0.5 rounded text-white text-[10px]'>{bal.grid?.code}</span>
+                      </div>
+                      <span className='text-white font-bold'>{bal.quantity} {item.unit}</span>
                     </div>
                   ))}
                   {item.stockBalances.length === 0 && (
@@ -142,39 +135,6 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
                   )}
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Visual Denah Gudang */}
-          <div className='bg-zinc-900 rounded-2xl border border-zinc-800 p-6 shadow-lg flex flex-col gap-4'>
-            <div className='flex items-center gap-2 border-b border-zinc-800 pb-3'>
-              <MapPin className='h-4 w-4 text-indigo-500' />
-              <span className='font-bold text-sm text-white'>Pinpoint Lokasi Barang</span>
-            </div>
-            <div className='relative w-full bg-zinc-800 rounded-xl overflow-hidden border border-zinc-700 shadow-sm' style={{ aspectRatio: '3 / 1.63' }}>
-              <div className='absolute inset-0 grid grid-cols-3 grid-rows-4'>
-                {Object.keys(RACK_COORDINATES).map((code) => {
-                  const hasThisItem = item!.stockBalances.some(b => b.location?.code === code);
-                  return (
-                    <div key={code} className={'border border-zinc-650/20 flex items-center justify-center text-[10px] font-mono font-bold transition-all ' + (hasThisItem ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-600')}>
-                      {code}
-                    </div>
-                  );
-                })}
-              </div>
-              {item.stockBalances.map((bal, idx) => {
-                if (!bal.location) return null;
-                const coords = RACK_COORDINATES[bal.location.code];
-                if (!coords) return null;
-                return (
-                  <div
-                    key={idx}
-                    className='absolute w-4 h-4 bg-indigo-500 border-2 border-white rounded-full -translate-x-1/2 -translate-y-1/2 shadow-lg animate-pulse z-10'
-                    style={{ top: coords.y + '%', left: coords.x + '%' }}
-                    title={'Rak ' + bal.location.code + ': ' + bal.quantity + ' ' + item!.unit}
-                  />
-                );
-              })}
             </div>
           </div>
         </div>
@@ -188,7 +148,7 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
                 day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
               });
               return (
-                <div key={move.id} className='p-3.5 rounded-xl border border-zinc-800 bg-zinc-850 flex flex-col gap-2 hover:border-zinc-700 transition-all'>
+                <div key={move.id} className='p-3.5 rounded-xl border border-zinc-800 bg-zinc-950/60 flex flex-col gap-2 hover:border-zinc-700 transition-all'>
                   <div className='flex items-center justify-between'>
                     <span className={'text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ' + (
                       move.type === 'IN' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
@@ -201,16 +161,16 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
                   </div>
                   <div className='flex items-baseline justify-between'>
                     <span className='text-xs font-semibold text-zinc-400'>
-                      {move.type === 'IN' ? 'Masuk ke ' + (move.destinationLocation?.code ?? '?') :
-                       move.type === 'OUT' ? 'Keluar dari ' + (move.sourceLocation?.code ?? '?') :
-                       'Pindah: ' + (move.sourceLocation?.code ?? '?') + ' -> ' + (move.destinationLocation?.code ?? '?')}
+                      {move.type === 'IN' ? 'Masuk ke Grid ' + (move.destinationGrid?.code ?? '?') :
+                       move.type === 'OUT' ? 'Keluar dari Grid ' + (move.sourceGrid?.code ?? '?') :
+                       'Pindah: ' + (move.sourceGrid?.code ?? '?') + ' -> ' + (move.destinationGrid?.code ?? '?')}
                     </span>
                     <span className='font-bold text-xs text-white'>
                       {move.type === 'IN' ? '+' : move.type === 'OUT' ? '-' : ''}{move.quantity} {item!.unit}
                     </span>
                   </div>
                   {move.note && (
-                    <span className='text-[10px] text-zinc-500 bg-zinc-900/50 p-2 rounded-lg italic'>{move.note}</span>
+                    <span className='text-[10px] text-zinc-500 bg-zinc-900 p-2 rounded-lg italic'>{move.note}</span>
                   )}
                 </div>
               );

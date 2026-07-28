@@ -41,49 +41,63 @@ model Item {
   stockMovements StockMovement[]
 }
 
-model WarehouseLocation {
+model Warehouse {
   id        Int      @id @default(autoincrement())
-  code      String   @unique
   name      String
-  xPercent  Float?
-  yPercent  Float?
-  isActive  Boolean  @default(true)
+  rows      Int      @default(4)
+  cols      Int      @default(3)
   createdAt DateTime @default(now())
+
+  grids Grid[]
+}
+
+model Grid {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique
+  warehouseId Int
+  row         Int?
+  col         Int?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
 
   stockBalancesHere         StockBalance[]
   stockMovementsSource      StockMovement[] @relation("MovementSource")
   stockMovementsDestination StockMovement[] @relation("MovementDestination")
+
+  @@index([warehouseId])
 }
 
 model StockBalance {
-  itemId     Int
-  locationId Int
-  quantity   Int      @default(0)
-  updatedAt  DateTime @updatedAt
+  itemId    Int
+  gridId    Int
+  quantity  Int      @default(0)
+  updatedAt DateTime @updatedAt
 
-  item     Item              @relation(fields: [itemId], references: [id])
-  location WarehouseLocation @relation(fields: [locationId], references: [id])
+  item Item @relation(fields: [itemId], references: [id])
+  grid Grid @relation(fields: [gridId], references: [id])
 
-  @@unique([itemId, locationId])
+  @@unique([itemId, gridId])
   @@index([itemId])
-  @@index([locationId])
+  @@index([gridId])
 }
 
 model StockMovement {
-  id                    Int       @id @default(autoincrement())
-  itemId                Int
-  type                  String
-  quantity              Int
-  sourceLocationId      Int?
-  destinationLocationId Int?
-  note                  String?
-  createdById           Int
-  createdAt             DateTime  @default(now())
+  id                   Int       @id @default(autoincrement())
+  itemId               Int
+  type                 String
+  quantity             Int
+  sourceGridId         Int?
+  destinationGridId    Int?
+  note                 String?
+  createdById          Int
+  createdAt            DateTime  @default(now())
 
-  item                Item               @relation(fields: [itemId], references: [id])
-  sourceLocation      WarehouseLocation? @relation("MovementSource", fields: [sourceLocationId], references: [id])
-  destinationLocation WarehouseLocation? @relation("MovementDestination", fields: [destinationLocationId], references: [id])
-  createdBy           User               @relation(fields: [createdById], references: [id])
+  item                Item  @relation(fields: [itemId], references: [id])
+  sourceGrid          Grid? @relation("MovementSource", fields: [sourceGridId], references: [id])
+  destinationGrid     Grid? @relation("MovementDestination", fields: [destinationGridId], references: [id])
+  createdBy           User  @relation(fields: [createdById], references: [id])
 
   @@index([itemId])
   @@index([createdAt])
