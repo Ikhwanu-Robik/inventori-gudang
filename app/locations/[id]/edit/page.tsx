@@ -11,29 +11,29 @@ export default async function EditLocationPage({ params }: { params: Promise<{ i
   }
 
   const { id } = await params;
-  const gridId = Number(id);
+  const locationId = Number(id);
 
-  if (isNaN(gridId)) {
+  if (isNaN(locationId)) {
     notFound();
   }
 
-  const grid = await prisma.grid.findUnique({
-    where: { id: gridId },
+  const location = await prisma.warehouseLocation.findUnique({
+    where: { id: locationId },
   });
 
-  if (!grid) {
+  if (!location) {
     notFound();
   }
 
   return (
     <EditLocationForm
       location={{
-        id: grid.id,
-        code: grid.code,
-        name: `Grid ${grid.code}`,
-        xPercent: null,
-        yPercent: null,
-        isActive: grid.isActive,
+        id: location.id,
+        code: location.code,
+        name: location.name,
+        xPercent: location.xPercent,
+        yPercent: location.yPercent,
+        isActive: location.isActive,
       }}
     />
   );

@@ -88,9 +88,7 @@ Setiap item harus punya:
 
 |Item|Status|Bukti Selesai|
 |---|---|---|
-|Banyak gudang|Selesai|Admin gudang dapat menambahkan banyak `Gudang`, dan setiap `Gudang` dapat memiliki `rows` dan `cols` masing-masing; Petugas gudang dapat memilih `Gudang` dan `Grid` saat melakukan input data barang; Atribut Gudang adalah `name`, `rows`, dan `cols`; Atribut `Grid` adalah `code`, `gudang_id` (`warehouseId`). Validasi Zod dan Aturan Bisnis #13 (Grid tidak dapat dihapus jika terdapat stok aktif atau histori transaksi) diterapkan penuh.|
-
-**Verifikasi sprint:** `npx vitest run tests/validation.test.ts` lulus; schema database ter-push dan ter-seed dengan 2 gudang awal (Gudang Utama & Gudang Cadangan).
+|Banyak gudang|belum dikerjakan|Admin gudang dapat menambahkan banyak `Gudang`, dan setiap `Gudang` dapat memiliki `rows` dan `cols` masing-masing; Petugas gudang dapat memilih `Gudang` dan `Grid` saat melakukan input data barang; Atribut Gudang adalah `name`, `rows`, dan `cols`; Atribut `Grid` adalah `code`, `gudang_id`|
 
 ## Sprint 6 - Product Image and Minor Improvements
 

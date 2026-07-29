@@ -36,48 +36,32 @@ async function main() {
     });
   }
 
-  // 2. Seed Warehouses & Grids
-  console.log('Seeding warehouses and grids...');
-  const warehouseConfigs = [
-    { name: 'Gudang Utama', rows: 4, cols: 3, prefix: 'G1' },
-    { name: 'Gudang Cadangan', rows: 3, cols: 3, prefix: 'G2' },
+  // 2. Seed Locations
+  console.log('Seeding locations...');
+  const locations = [
+    { code: 'A-01', name: 'Rak A-01', xPercent: 17, yPercent: 12.5 },
+    { code: 'A-02', name: 'Rak A-02', xPercent: 17, yPercent: 37.5 },
+    { code: 'A-03', name: 'Rak A-03', xPercent: 17, yPercent: 62.5 },
+    { code: 'A-04', name: 'Rak A-04', xPercent: 17, yPercent: 87.5 },
+    { code: 'B-01', name: 'Rak B-01', xPercent: 50, yPercent: 12.5 },
+    { code: 'B-02', name: 'Rak B-02', xPercent: 50, yPercent: 37.5 },
+    { code: 'B-03', name: 'Rak B-03', xPercent: 50, yPercent: 62.5 },
+    { code: 'B-04', name: 'Rak B-04', xPercent: 50, yPercent: 87.5 },
+    { code: 'C-01', name: 'Rak C-01', xPercent: 83, yPercent: 12.5 },
+    { code: 'C-02', name: 'Rak C-02', xPercent: 83, yPercent: 37.5 },
+    { code: 'C-03', name: 'Rak C-03', xPercent: 83, yPercent: 62.5 },
+    { code: 'C-04', name: 'Rak C-04', xPercent: 83, yPercent: 87.5 },
   ];
 
-  for (const config of warehouseConfigs) {
-    let warehouse = await prisma.warehouse.findFirst({
-      where: { name: config.name },
+  for (const loc of locations) {
+    await prisma.warehouseLocation.upsert({
+      where: { code: loc.code },
+      update: {
+        xPercent: loc.xPercent,
+        yPercent: loc.yPercent,
+      },
+      create: { ...loc, isActive: true },
     });
-
-    if (!warehouse) {
-      warehouse = await prisma.warehouse.create({
-        data: {
-          name: config.name,
-          rows: config.rows,
-          cols: config.cols,
-        },
-      });
-    }
-
-    for (let r = 1; r <= config.rows; r += 1) {
-      for (let c = 1; c <= config.cols; c += 1) {
-        const code = `${config.prefix}-R${r}-C${c}`;
-        await prisma.grid.upsert({
-          where: { code },
-          update: {
-            warehouseId: warehouse.id,
-            row: r,
-            col: c,
-          },
-          create: {
-            code,
-            warehouseId: warehouse.id,
-            row: r,
-            col: c,
-            isActive: true,
-          },
-        });
-      }
-    }
   }
 
   // 3. Seed Users

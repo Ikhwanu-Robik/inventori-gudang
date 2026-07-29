@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { hasSufficientStock, parseInventoryMutationForm } from '../lib/inventory';
-import { itemSchema, warehouseSchema, gridSchema, stockMovementSchema } from '../lib/schemas';
+import { itemSchema, stockMovementSchema } from '../lib/schemas';
 import { getItemCategory } from '../lib/categories';
 
 function createFormData(values: Record<string, string>): FormData {
@@ -29,23 +29,6 @@ describe('Validation Schemas', () => {
     });
   });
 
-  describe('warehouseSchema and gridSchema', () => {
-    it('validates warehouse with name, rows, cols', () => {
-      const res = warehouseSchema.safeParse({ name: 'Gudang Utama', rows: 4, cols: 3 });
-      expect(res.success).toBe(true);
-    });
-
-    it('rejects warehouse with invalid rows or cols', () => {
-      const res = warehouseSchema.safeParse({ name: 'Gudang Invalid', rows: 0, cols: 25 });
-      expect(res.success).toBe(false);
-    });
-
-    it('validates grid with code and warehouseId', () => {
-      const res = gridSchema.safeParse({ code: 'G1-R1-C1', warehouseId: 1, row: 1, col: 1 });
-      expect(res.success).toBe(true);
-    });
-  });
-
   describe('stockMovementSchema', () => {
     it('should reject zero or negative quantity', () => {
       const res = stockMovementSchema.safeParse({
@@ -69,14 +52,14 @@ describe('Validation Schemas', () => {
   });
 
   describe('mutasi persediaan', () => {
-    it('normalisasi SKU, grid, dan catatan mutasi masuk', () => {
+    it('normalisasi SKU, lokasi, dan catatan mutasi masuk', () => {
       const result = parseInventoryMutationForm(
         createFormData({
           sku: '  krs-a12 ',
           name: 'Kursi',
           unit: 'pcs',
           qty: '10',
-          location: ' g1-r1-c1 ',
+          location: ' a-01 ',
           type: 'IN',
           note: '  Penerimaan supplier  ',
         }),
@@ -89,7 +72,7 @@ describe('Validation Schemas', () => {
           name: 'Kursi',
           unit: 'pcs',
           quantity: 10,
-          locationCode: 'G1-R1-C1',
+          locationCode: 'A-01',
           type: 'IN',
           note: 'Penerimaan supplier',
           destinationLocationCode: undefined,
@@ -98,16 +81,16 @@ describe('Validation Schemas', () => {
       });
     });
 
-    it('menolak jumlah pecahan dan transfer ke grid sama', () => {
+    it('menolak jumlah pecahan dan transfer ke rak sama', () => {
       const decimalResult = parseInventoryMutationForm(
-        createFormData({ sku: 'KRS-A12', qty: '1.5', location: 'G1-R1-C1', type: 'OUT' }),
+        createFormData({ sku: 'KRS-A12', qty: '1.5', location: 'A-01', type: 'OUT' }),
       );
       const sameRackResult = parseInventoryMutationForm(
         createFormData({
           sku: 'KRS-A12',
           qty: '1',
-          location: 'G1-R1-C1',
-          destLocation: 'G1-R1-C1',
+          location: 'A-01',
+          destLocation: 'A-01',
           type: 'TRANSFER',
         }),
       );

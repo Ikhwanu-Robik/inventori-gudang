@@ -3,13 +3,13 @@ import { prisma } from '@/lib/prisma';
 import { Boxes, Search, PlusCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
-type StockBal = { quantity: number; grid: { code: string } | null };
+type StockBal = { quantity: number; location: { code: string } | null };
 type ItemRow = { id: number; sku: string; name: string; unit: string; stockBalances: StockBal[] };
 
 const MOCK: ItemRow[] = [
-  { id: 1, sku: 'KRS-A12', name: 'Kursi Kantor Ergonomis', unit: 'pcs', stockBalances: [{ quantity: 25, grid: { code: 'G1-R1-C2' } }, { quantity: 12, grid: { code: 'G2-R1-C1' } }] },
-  { id: 2, sku: 'MJA-B04', name: 'Meja Lipat Kayu', unit: 'pcs', stockBalances: [{ quantity: 15, grid: { code: 'G1-R2-C1' } }] },
-  { id: 3, sku: 'LMP-C01', name: 'Lampu LED Phillips', unit: 'box', stockBalances: [{ quantity: 80, grid: { code: 'G1-R3-C3' } }] },
+  { id: 1, sku: 'KRS-A12', name: 'Kursi Kantor Ergonomis', unit: 'pcs', stockBalances: [{ quantity: 25, location: { code: 'A-02' } }, { quantity: 12, location: { code: 'B-01' } }] },
+  { id: 2, sku: 'MJA-B04', name: 'Meja Lipat Kayu', unit: 'pcs', stockBalances: [{ quantity: 15, location: { code: 'B-04' } }] },
+  { id: 3, sku: 'LMP-C01', name: 'Lampu LED Phillips', unit: 'box', stockBalances: [{ quantity: 80, location: { code: 'C-01' } }] },
 ];
 
 export default async function ItemsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
@@ -17,22 +17,11 @@ export default async function ItemsPage({ searchParams }: { searchParams: Promis
   let items: ItemRow[] = [];
   let dbOnline = true;
   try {
-    const rawItems = await prisma.item.findMany({
+    items = await prisma.item.findMany({
       where: query ? { OR: [{ name: { contains: query, mode: 'insensitive' } }, { sku: { contains: query, mode: 'insensitive' } }] } : undefined,
-      include: { stockBalances: { include: { grid: true } } },
+      include: { stockBalances: { include: { location: true } } },
       orderBy: { createdAt: 'desc' },
-    });
-
-    items = rawItems.map((item) => ({
-      id: item.id,
-      sku: item.sku,
-      name: item.name,
-      unit: item.unit,
-      stockBalances: item.stockBalances.map((sb) => ({
-        quantity: sb.quantity,
-        grid: sb.grid ? { code: sb.grid.code } : null,
-      })),
-    }));
+    }) as ItemRow[];
   } catch {
     dbOnline = false;
     const q = query.toLowerCase();
@@ -72,7 +61,7 @@ export default async function ItemsPage({ searchParams }: { searchParams: Promis
             <table className='w-full border-collapse text-left'>
               <thead>
                 <tr className='bg-zinc-950/50 border-b border-zinc-800 text-xs font-semibold text-zinc-400 uppercase tracking-wider'>
-                  <th className='px-6 py-4'>SKU</th><th className='px-6 py-4'>Nama Barang</th><th className='px-6 py-4'>Grid & Stok</th><th className='px-6 py-4 text-right'>Total</th>
+                  <th className='px-6 py-4'>SKU</th><th className='px-6 py-4'>Nama Barang</th><th className='px-6 py-4'>Lokasi & Stok</th><th className='px-6 py-4 text-right'>Total</th>
                 </tr>
               </thead>
               <tbody className='divide-y divide-zinc-800 text-sm text-zinc-300'>
@@ -94,7 +83,7 @@ export default async function ItemsPage({ searchParams }: { searchParams: Promis
                         <div className='flex flex-wrap gap-1.5'>
                           {item.stockBalances?.map((b, i) => (
                             <span key={i} className='inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700/50'>
-                              Grid {b.grid?.code ?? '?'} <span className='font-bold text-white'>({b.quantity})</span>
+                              Rak {b.location?.code ?? '?'} <span className='font-bold text-white'>({b.quantity})</span>
                             </span>
                           ))}
                         </div>

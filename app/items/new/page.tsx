@@ -1,13 +1,8 @@
 "use client";
-
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { saveItemMutasi } from "@/app/actions/inventory";
-import {
-  generateNextSku,
-  getActiveCategories,
-  getActiveWarehousesWithGrids,
-} from "@/app/actions/sku";
+import { generateNextSku, getActiveCategories, getActiveLocations } from "@/app/actions/sku";
 import {
   ArrowLeft,
   Save,
@@ -18,39 +13,24 @@ import {
   ArrowRightLeft,
   ArrowDown,
   ArrowUp,
-  Building2,
 } from "lucide-react";
 import Link from "next/link";
-
-type WarehouseData = {
-  id: number;
-  name: string;
-  rows: number;
-  cols: number;
-  grids: Array<{
-    id: number;
-    code: string;
-    row?: number | null;
-    col?: number | null;
-    isActive: boolean;
-  }>;
-};
-
+import { warehouseRacks } from "@/lib/warehouse";
 export default function NewItemPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState<"IN" | "OUT" | "TRANSFER">("IN");
   const [error, setError] = useState<string | null>(null);
-
-  const [warehouses, setWarehouses] = useState<WarehouseData[]>([]);
-  const [selectedWarehouseId, setSelectedWarehouseId] = useState<number | null>(null);
-
   const [selectedLoc, setSelectedLoc] = useState<string | null>(null);
   const [selectedDestLoc, setSelectedDestLoc] = useState<string | null>(null);
-  const [pickingTarget, setPickingTarget] = useState<"source" | "dest">("source");
-
+  const [pickingTarget, setPickingTarget] = useState<"source" | "dest">(
+    "source",
+  );
   const [skuMode, setSkuMode] = useState<"auto" | "manual">("auto");
   const [categories, setCategories] = useState<Array<{ code: string; name: string }>>([]);
+  const [locations, setLocations] = useState<
+    Array<{ code: string; name: string; xPercent: number | null; yPercent: number | null; isActive: boolean }>
+  >([]);
   const [category, setCategory] = useState<string>("");
   const [generatedSku, setGeneratedSku] = useState("");
   const [isLoadingSku, setIsLoadingSku] = useState(false);
@@ -62,13 +42,7 @@ export default function NewItemPage() {
         setCategory(cats[0].code);
       }
     });
-
-    getActiveWarehousesWithGrids().then((whs) => {
-      setWarehouses(whs);
-      if (whs.length > 0) {
-        setSelectedWarehouseId(whs[0].id);
-      }
-    });
+    getActiveLocations().then(setLocations);
   }, []);
 
   useEffect(() => {
@@ -98,11 +72,12 @@ export default function NewItemPage() {
     }
   }, [category, skuMode, activeTab]);
 
-  const currentWarehouse =
-    warehouses.find((w) => w.id === selectedWarehouseId) ?? warehouses[0];
-
-  const handleGridClick = (code: string, isActive: boolean) => {
-    if (!isActive) return;
+  const handleRackClick = (code: string) => {
+    // Cek apakah rak dinonaktifkan di database
+    const dbLoc = locations.find((l) => l.code === code);
+    if (dbLoc && dbLoc.isActive === false) {
+      return; // rak tidak aktif tidak dapat dipilih
+    }
 
     if (activeTab === "TRANSFER") {
       if (pickingTarget === "source") {
@@ -121,11 +96,11 @@ export default function NewItemPage() {
     e.preventDefault();
     setError(null);
     if (!selectedLoc) {
-      setError("Pilih Gudang dan Grid asal / lokasi penyimpanan terlebih dahulu.");
+      setError("Tentukan lokasi asal / rak penyimpanan terlebih dahulu.");
       return;
     }
     if (activeTab === "TRANSFER" && !selectedDestLoc) {
-      setError("Pilih Grid tujuan pemindahan barang.");
+      setError("Tentukan lokasi tujuan pemindahan barang.");
       return;
     }
     const formData = new FormData(e.currentTarget);
@@ -151,16 +126,16 @@ export default function NewItemPage() {
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
-            Transaksi Mutasi Gudang & Grid
+          <h1 className="text-2xl font-bold tracking-tight">
+            Transaksi Mutasi Gudang
           </h1>
-          <p className="text-xs text-zinc-400">
-            Pencatatan barang masuk, keluar, atau pindah grid antar-gudang secara real-time
+          <p className="text-xs text-zinc-500">
+            Pencatatan barang masuk, keluar, atau pindah rak secara real-time
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 p-1 rounded-2xl bg-zinc-900 border border-zinc-800 max-w-md w-full shadow-inner">
+      <div className="grid grid-cols-3 p-1 rounded-2xl bg-zinc-200/60 dark:bg-zinc-900 border border-zinc-200/40 dark:border-zinc-800/80 max-w-md w-full shadow-inner">
         <button
           type="button"
           onClick={() => {
@@ -171,7 +146,7 @@ export default function NewItemPage() {
             "py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 " +
             (activeTab === "IN"
               ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md"
-              : "text-zinc-400 hover:text-zinc-200")
+              : "text-zinc-500 hover:text-zinc-850")
           }
         >
           <ArrowDown className="h-3.5 w-3.5" /> Barang Masuk
@@ -186,7 +161,7 @@ export default function NewItemPage() {
             "py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 " +
             (activeTab === "OUT"
               ? "bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-md"
-              : "text-zinc-400 hover:text-zinc-200")
+              : "text-zinc-500 hover:text-zinc-850")
           }
         >
           <ArrowUp className="h-3.5 w-3.5" /> Barang Keluar
@@ -201,16 +176,16 @@ export default function NewItemPage() {
             "py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 " +
             (activeTab === "TRANSFER"
               ? "bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-md"
-              : "text-zinc-400 hover:text-zinc-200")
+              : "text-zinc-500 hover:text-zinc-850")
           }
         >
-          <ArrowRightLeft className="h-3.5 w-3.5" /> Pindah Grid
+          <ArrowRightLeft className="h-3.5 w-3.5" /> Pindah Rak
         </button>
       </div>
 
       {error && (
-        <div className="flex items-start gap-3 p-4 bg-rose-950/20 border border-rose-900/30 rounded-2xl text-rose-400 shadow-sm animate-in fade-in duration-200">
-          <AlertCircle className="h-5 w-5 shrink-0 text-rose-400 mt-0.5" />
+        <div className="flex items-start gap-3 p-4 bg-rose-50/60 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-2xl text-rose-800 dark:text-rose-400 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
+          <AlertCircle className="h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
           <div className="flex flex-col gap-0.5">
             <span className="font-bold text-sm">Kesalahan Transaksi</span>
             <span className="text-xs leading-relaxed">{error}</span>
@@ -221,16 +196,16 @@ export default function NewItemPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <form
           onSubmit={handleSubmit}
-          className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 flex flex-col gap-5 shadow-sm text-white"
+          className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 flex flex-col gap-5 shadow-sm"
         >
           <div
             className={
-              "flex items-center gap-2 font-semibold text-sm border-b border-zinc-800 pb-3 " +
+              "flex items-center gap-2 font-semibold text-sm border-b border-zinc-100 pb-3 " +
               (activeTab === "IN"
-                ? "text-emerald-400"
+                ? "text-emerald-600"
                 : activeTab === "OUT"
-                  ? "text-rose-400"
-                  : "text-indigo-400")
+                  ? "text-rose-600"
+                  : "text-indigo-600")
             }
           >
             <Sparkles className="h-4 w-4" />
@@ -239,7 +214,7 @@ export default function NewItemPage() {
                 ? "Informasi Barang Masuk"
                 : activeTab === "OUT"
                   ? "Informasi Barang Keluar"
-                  : "Informasi Pemindahan Grid"}
+                  : "Informasi Pemindahan Rak"}
             </span>
           </div>
 
@@ -254,9 +229,9 @@ export default function NewItemPage() {
                       value="auto"
                       checked={skuMode === "auto"}
                       onChange={() => setSkuMode("auto")}
-                      className="w-4 h-4 text-indigo-500"
+                      className="w-4 h-4 text-indigo-600"
                     />
-                    <span className="text-xs font-bold text-zinc-300">
+                    <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400">
                       SKU Otomatis (Recommended)
                     </span>
                   </label>
@@ -267,9 +242,9 @@ export default function NewItemPage() {
                       value="manual"
                       checked={skuMode === "manual"}
                       onChange={() => setSkuMode("manual")}
-                      className="w-4 h-4 text-indigo-500"
+                      className="w-4 h-4 text-indigo-600"
                     />
-                    <span className="text-xs font-bold text-zinc-300">
+                    <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400">
                       Input Manual
                     </span>
                   </label>
@@ -278,25 +253,25 @@ export default function NewItemPage() {
                 {skuMode === "auto" ? (
                   <>
                     <div className="flex flex-col gap-1.5">
-                      <label htmlFor="category" className="text-xs font-semibold text-zinc-400">
+                      <label htmlFor="category" className="text-xs font-semibold text-zinc-500">
                         Kategori Barang
                       </label>
                       <select
                         id="category"
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-950 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                        className="px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                         disabled={isPending}
                       >
                         {categories.map((cat) => (
-                          <option key={cat.code} value={cat.code} className="bg-zinc-900 text-white">
+                          <option key={cat.code} value={cat.code} className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">
                             {cat.code} - {cat.name}
                           </option>
                         ))}
                       </select>
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label htmlFor="sku" className="text-xs font-semibold text-zinc-400">
+                      <label htmlFor="sku" className="text-xs font-semibold text-zinc-500">
                         SKU / Kode Barang
                       </label>
                       <input
@@ -306,7 +281,7 @@ export default function NewItemPage() {
                         value={generatedSku}
                         onChange={(e) => setGeneratedSku(e.target.value)}
                         placeholder={isLoadingSku ? "Generating..." : "KRS-001"}
-                        className="px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-950 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono"
+                        className="px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono"
                         required
                         disabled={isPending || isLoadingSku}
                       />
@@ -314,7 +289,7 @@ export default function NewItemPage() {
                   </>
                 ) : (
                   <div className="sm:col-span-2 flex flex-col gap-1.5">
-                    <label htmlFor="sku" className="text-xs font-semibold text-zinc-400">
+                    <label htmlFor="sku" className="text-xs font-semibold text-zinc-500">
                       SKU / Kode Barang
                     </label>
                     <input
@@ -322,7 +297,7 @@ export default function NewItemPage() {
                       id="sku"
                       name="sku"
                       placeholder="Contoh: KRS-A12 atau CUSTOM-001"
-                      className="px-4 py-2.5 rounded-xl border border-zinc-800 bg-transparent text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono"
+                      className="px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono"
                       required
                       disabled={isPending}
                     />
@@ -331,7 +306,7 @@ export default function NewItemPage() {
               </>
             ) : (
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="sku" className="text-xs font-semibold text-zinc-400">
+                <label htmlFor="sku" className="text-xs font-semibold text-zinc-500">
                   SKU / Kode Barang
                 </label>
                 <input
@@ -340,7 +315,7 @@ export default function NewItemPage() {
                   name="sku"
                   required
                   placeholder="KRS-A12"
-                  className="px-4 py-2.5 rounded-xl border border-zinc-800 bg-transparent text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono"
+                  className="px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono"
                   disabled={isPending}
                 />
               </div>
@@ -350,7 +325,7 @@ export default function NewItemPage() {
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="name"
-                  className="text-xs font-semibold text-zinc-400"
+                  className="text-xs font-semibold text-zinc-500"
                 >
                   Nama Barang
                 </label>
@@ -359,8 +334,8 @@ export default function NewItemPage() {
                   id="name"
                   name="name"
                   required
-                  placeholder="Kursi Kayu Jati Minimalis"
-                  className="px-4 py-2.5 rounded-xl border border-zinc-800 bg-transparent text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  placeholder="Kursi Kantor Ergonomis"
+                  className="px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 />
               </div>
             )}
@@ -370,7 +345,7 @@ export default function NewItemPage() {
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="qty"
-                className="text-xs font-semibold text-zinc-400"
+                className="text-xs font-semibold text-zinc-500"
               >
                 Jumlah Mutasi
               </label>
@@ -381,14 +356,14 @@ export default function NewItemPage() {
                 required
                 min="1"
                 defaultValue="1"
-                className="px-4 py-2.5 rounded-xl border border-zinc-800 bg-transparent text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                className="px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
               />
             </div>
             {activeTab === "IN" && (
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="unit"
-                  className="text-xs font-semibold text-zinc-400"
+                  className="text-xs font-semibold text-zinc-500"
                 >
                   Satuan
                 </label>
@@ -397,8 +372,8 @@ export default function NewItemPage() {
                   id="unit"
                   name="unit"
                   required
-                  placeholder="pcs / unit"
-                  className="px-4 py-2.5 rounded-xl border border-zinc-800 bg-transparent text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  placeholder="pcs / box"
+                  className="px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 />
               </div>
             )}
@@ -407,7 +382,7 @@ export default function NewItemPage() {
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="note"
-              className="text-xs font-semibold text-zinc-400"
+              className="text-xs font-semibold text-zinc-500"
             >
               Catatan Transaksi (Opsional)
             </label>
@@ -415,27 +390,27 @@ export default function NewItemPage() {
               id="note"
               name="note"
               rows={2}
-              placeholder="Detail mutasi / alasan..."
-              className="px-4 py-2.5 rounded-xl border border-zinc-800 bg-transparent text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
+              placeholder="Isi alasan / detail mutasi..."
+              className="px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
             />
           </div>
 
           <div className="flex flex-col gap-2">
             {activeTab !== "TRANSFER" ? (
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-zinc-400">
+                <label className="text-xs font-semibold text-zinc-500">
                   {activeTab === "IN"
-                    ? "Lokasi Grid Penyimpanan"
-                    : "Lokasi Grid Asal"}
+                    ? "Lokasi Penyimpanan"
+                    : "Lokasi Asal Barang"}
                 </label>
-                <div className="px-4 py-3 rounded-xl border border-dashed border-zinc-800 flex items-center justify-between text-sm bg-zinc-950 shadow-sm">
-                  <span className="font-medium text-zinc-300">
+                <div className="px-4 py-3 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700 flex items-center justify-between text-sm bg-zinc-50 dark:bg-zinc-900 shadow-sm">
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">
                     {selectedLoc
-                      ? "Grid " + selectedLoc
-                      : "Pilih Gudang & Grid di sebelah kanan"}
+                      ? "Rak " + selectedLoc
+                      : "Pilih di denah sebelah kanan"}
                   </span>
                   {selectedLoc && (
-                    <MapPin className="h-4 w-4 text-indigo-400" />
+                    <MapPin className="h-4 w-4 text-indigo-500" />
                   )}
                 </div>
               </div>
@@ -448,15 +423,15 @@ export default function NewItemPage() {
                   className={
                     "flex flex-col gap-1.5 cursor-pointer p-3 rounded-xl border transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 " +
                     (pickingTarget === "source"
-                      ? "border-rose-500 bg-rose-950/20"
-                      : "border-zinc-800 bg-zinc-950/40")
+                      ? "border-rose-500 bg-rose-50/10"
+                      : "border-zinc-200 dark:border-zinc-800")
                   }
                 >
-                  <span className="text-[10px] font-semibold text-zinc-400">
-                    1. Grid Asal
+                  <span className="text-[10px] font-semibold text-zinc-500">
+                    1. Rak Asal
                   </span>
-                  <span className="font-bold text-sm text-zinc-200">
-                    {selectedLoc ? "Grid " + selectedLoc : "Pilih Grid Asal"}
+                  <span className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
+                    {selectedLoc ? "Rak " + selectedLoc : "Pilih rak asal"}
                   </span>
                 </button>
                 <button
@@ -466,17 +441,17 @@ export default function NewItemPage() {
                   className={
                     "flex flex-col gap-1.5 cursor-pointer p-3 rounded-xl border transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 " +
                     (pickingTarget === "dest"
-                      ? "border-emerald-500 bg-emerald-950/20"
-                      : "border-zinc-800 bg-zinc-950/40")
+                      ? "border-emerald-500 bg-emerald-50/10"
+                      : "border-zinc-200 dark:border-zinc-800")
                   }
                 >
-                  <span className="text-[10px] font-semibold text-zinc-400">
-                    2. Grid Tujuan
+                  <span className="text-[10px] font-semibold text-zinc-500">
+                    2. Rak Tujuan
                   </span>
-                  <span className="font-bold text-sm text-zinc-200">
+                  <span className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
                     {selectedDestLoc
-                      ? "Grid " + selectedDestLoc
-                      : "Pilih Grid Tujuan"}
+                      ? "Rak " + selectedDestLoc
+                      : "Pilih rak tujuan"}
                   </span>
                 </button>
               </div>
@@ -489,16 +464,16 @@ export default function NewItemPage() {
             className={
               "w-full py-3 text-white rounded-xl font-bold text-sm transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 " +
               (activeTab === "IN"
-                ? "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
+                ? "bg-gradient-to-r from-emerald-500 to-teal-600 hover:shadow-emerald-500/10"
                 : activeTab === "OUT"
-                  ? "bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700"
-                  : "bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700")
+                  ? "bg-gradient-to-r from-rose-500 to-red-600 hover:shadow-rose-500/10"
+                  : "bg-gradient-to-r from-indigo-500 to-violet-600 hover:shadow-indigo-500/10")
             }
           >
             {isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Memproses Mutasi...
+                Memproses...
               </>
             ) : (
               <>
@@ -509,80 +484,63 @@ export default function NewItemPage() {
           </button>
         </form>
 
-        <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 flex flex-col gap-4 shadow-sm h-fit">
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-            <div className="flex items-center gap-2 font-semibold text-sm text-white">
-              <Building2 className="h-4 w-4 text-indigo-500" />
-              <span>Pilih Gudang & Grid</span>
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 flex flex-col gap-4 shadow-sm h-fit">
+          <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+            <div className="flex items-center gap-2 font-semibold text-sm">
+              <MapPin className="h-4 w-4 text-indigo-500" />
+              <span>Peta Gudang</span>
             </div>
             {activeTab === "TRANSFER" && (
-              <span className="text-xs text-indigo-400 font-bold px-2.5 py-0.5 bg-indigo-950/60 border border-indigo-500/30 rounded-full">
+              <span className="text-xs text-black font-bold px-2 py-0.5 bg-indigo-50 rounded-full">
                 {pickingTarget === "source"
                   ? "Pilih Asal (Merah)"
                   : "Pilih Tujuan (Hijau)"}
               </span>
             )}
           </div>
-
-          {/* Gudang Selection Dropdown / Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            {warehouses.map((w) => (
-              <button
-                key={w.id}
-                type="button"
-                onClick={() => setSelectedWarehouseId(w.id)}
-                className={
-                  "px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap border " +
-                  (w.id === currentWarehouse?.id
-                    ? "bg-indigo-600/20 text-indigo-400 border-indigo-500/50"
-                    : "bg-zinc-950 text-zinc-400 border-zinc-800 hover:text-zinc-200")
-                }
-              >
-                {w.name} ({w.rows}x{w.cols})
-              </button>
-            ))}
-          </div>
-
-          {currentWarehouse && (
-            <div
-              className="grid gap-2 w-full bg-zinc-950 p-4 rounded-xl border border-zinc-800 select-none"
-              style={{
-                gridTemplateColumns: `repeat(${currentWarehouse.cols}, minmax(0, 1fr))`,
-              }}
-            >
-              {currentWarehouse.grids.map((grid) => {
-                const isSource = selectedLoc === grid.code;
-                const isDest = selectedDestLoc === grid.code;
-                const isInactive = !grid.isActive;
+          <div
+            className="relative w-full bg-zinc-100 dark:bg-zinc-800 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 cursor-pointer select-none"
+            style={{ aspectRatio: "3 / 1.63" }}
+          >
+            <div className="absolute inset-0 grid grid-cols-3 grid-rows-4">
+              {warehouseRacks.map((rack) => {
+                const isSource = selectedLoc === rack.code;
+                const isDest = selectedDestLoc === rack.code;
+                const dbLoc = locations.find((l) => l.code === rack.code);
+                const isInactive = dbLoc ? dbLoc.isActive === false : false;
 
                 return (
                   <button
-                    key={grid.id}
+                    key={rack.code}
                     type="button"
-                    onClick={() => handleGridClick(grid.code, grid.isActive)}
+                    onClick={() => !isInactive && handleRackClick(rack.code)}
+                    aria-label={
+                      activeTab === "TRANSFER"
+                        ? `Pilih Rak ${rack.code} sebagai ${pickingTarget === "source" ? "asal" : "tujuan"}`
+                        : `Pilih Rak ${rack.code}`
+                    }
                     disabled={isInactive}
                     className={
-                      "py-3 px-2 rounded-lg border text-xs font-mono font-bold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer " +
+                      "border border-zinc-300/30 dark:border-zinc-650/30 flex items-center justify-center text-[10px] font-mono font-bold transition-all cursor-pointer focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-inset " +
                       (isInactive
-                        ? "bg-zinc-950 text-zinc-700 border-zinc-900 cursor-not-allowed"
+                        ? "bg-zinc-200/50 dark:bg-zinc-900/50 text-zinc-400/30 dark:text-zinc-700 cursor-not-allowed"
                         : isSource
-                          ? "bg-rose-600 text-white border-rose-500 shadow-md"
+                          ? "bg-rose-600 text-white"
                           : isDest
-                            ? "bg-emerald-600 text-white border-emerald-500 shadow-md"
-                            : "bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-indigo-500/50 hover:text-white")
+                            ? "bg-emerald-600 text-white"
+                            : "text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-950/20")
                     }
                   >
-                    <span>{grid.code}</span>
+                    {rack.code}
                   </button>
                 );
               })}
             </div>
-          )}
-
-          <p className="text-[11px] text-zinc-500 text-center leading-relaxed">
+          </div>
+          <p className="text-[11px] text-zinc-400 text-center leading-relaxed">
             {activeTab === "TRANSFER"
-              ? "Pilih gudang, lalu klik Grid untuk menetapkan asal (merah) & tujuan (hijau)"
-              : "Pilih gudang, lalu klik Grid lokasi penyimpanan yang diinginkan"}
+              ? "Klik rak untuk menetapkan rak asal (merah) dan rak tujuan (hijau)"
+              : "Klik pada rak untuk menentukan lokasi penyimpanan"}
           </p>
         </div>
       </div>
