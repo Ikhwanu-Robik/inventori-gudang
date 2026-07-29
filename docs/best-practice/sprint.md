@@ -92,6 +92,18 @@ Setiap item harus punya:
 
 **Verifikasi sprint:** `npx vitest run tests/validation.test.ts` lulus; schema database ter-push dan ter-seed dengan 2 gudang awal (Gudang Utama & Gudang Cadangan).
 
+## Sprint 6 - Product Image and Minor Improvements
+
+**Tujuan: Barang dapat memiliki gambar; beberapa pemolesan minor.**
+
+|Item|Status|Bukti Selesai|
+|---|---|---|
+|`Grid Asal` terisi otomatis di laman Pindah Grid|Belum dikerjakan|Input `Grid Asal` pada laman transfer barang langsung terisi berdasarkan Grid barang, dan tidak dapat diganti|
+|Barang memiliki Gambar|Belum dikerjakan|Terdapat utility functions untuk interaksi dengan Cloudflare CDN di `lib/cdn.ts`; Skema `Item` memiliki kolom `image_url`; Terdapat input untuk gambar pada form di laman Barang Masuk; fungsi `executeInventoryMutation` di `inventory.ts` memiliki kode untuk memanggil fungsi `uploadImage` dari `lib/cdn.ts`|
+|Fitur "unggah gambar" teruji|Belum dikerjakan|Terdapat unit test untuk fitur "unggah gambar" dengan CDN dummy di `imageupload.test.ts`|
+
+**Verifikasi sprint:** `npx vitest run tests`, `validation.test.ts`, dan `imageupload.test.ts` lulus; schema database ter-push dan ter-seed dengan 2 gudang awal (Gudang Utama & Gudang Cadangan).
+
 ## Definition of Ready
 
 Pekerjaan boleh mulai bila kebutuhan, aturan bisnis, dampak data, dan cara verifikasi sudah jelas. Bila tidak jelas, tambahkan pertanyaan ke PRD atau buat item eksplorasi kecil.
