@@ -24,6 +24,12 @@ export default function Home() {
 
           <div className="flex items-center gap-3">
             <Link
+              href="/items"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-300 hover:text-white px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
+            >
+              Inventory Catalog
+            </Link>
+            <Link
               href="/items/new"
               className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 transition-all shadow-md shadow-indigo-600/20"
             >

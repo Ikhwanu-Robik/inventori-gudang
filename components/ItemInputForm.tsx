@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import React, { useState, ChangeEvent } from 'react'
 import WarehouseBlueprint, { PinLocation } from './WarehouseBlueprint'
 
@@ -145,9 +146,10 @@ export default function ItemInputForm() {
 
             {imagePreview ? (
               <div className="relative group w-full h-48 sm:h-56 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 flex items-center justify-center">
-                <img
+                <Image
                   src={imagePreview}
                   alt="Item Preview"
+                  fill
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center gap-2">
