@@ -12,7 +12,7 @@ export interface InventoryItem {
   unit: string
   note?: string
   imagePreview?: string | null
-  selectedLocation?: PinLocation | null
+  selectedLocation?: PinLocation[] | null
 }
 
 interface ItemCardProps {
@@ -76,12 +76,16 @@ export default function ItemCard({ item }: ItemCardProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <span className="truncate max-w-[180px]">
-              {item.selectedLocation ? item.selectedLocation.blueprintName : 'Unassigned Location'}
+              {item.selectedLocation && item.selectedLocation.length > 0
+                ? item.selectedLocation.length === 1
+                  ? item.selectedLocation[0].blueprintName
+                  : `${item.selectedLocation[0].blueprintName} (+${item.selectedLocation.length - 1} more)`
+                : 'Unassigned Location'}
             </span>
           </div>
-          {item.selectedLocation && (
+          {item.selectedLocation && item.selectedLocation.length > 0 && (
             <span className="font-mono text-[10px] bg-indigo-950/80 text-indigo-300 border border-indigo-800/50 px-2 py-0.5 rounded">
-              {item.selectedLocation.xPct}%, {item.selectedLocation.yPct}%
+              {item.selectedLocation.length} zone{item.selectedLocation.length > 1 ? 's' : ''}
             </span>
           )}
         </div>

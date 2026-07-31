@@ -43,14 +43,20 @@ const BLUEPRINTS: BlueprintData[] = [
 ]
 
 interface Props {
-  selectedLocation: PinLocation | null
+  selectedLocation: PinLocation | PinLocation[] | null
   onSelectLocation: (loc: PinLocation) => void
-  displayOnly: boolean
+  displayOnly?: boolean
 }
 
 export default function WarehouseBlueprint({ selectedLocation, onSelectLocation, displayOnly = false }: Props) {
   const [currentBlueprintIndex, setCurrentBlueprintIndex] = useState(0)
   const currentBlueprint = BLUEPRINTS[currentBlueprintIndex]
+
+  const locations = Array.isArray(selectedLocation)
+    ? selectedLocation
+    : selectedLocation
+      ? [selectedLocation]
+      : []
 
   const handleSwitchBlueprint = () => {
     setCurrentBlueprintIndex((prev) => (prev + 1) % BLUEPRINTS.length)
@@ -265,23 +271,25 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
             </g>
           )}
 
-          {/* Selected Pin Location Marker */}
-          {selectedLocation && selectedLocation.blueprintId === currentBlueprint.id && (
-            <g transform={`translate(${(selectedLocation.xPct / 100) * 1000}, ${(selectedLocation.yPct / 100) * 625})`}>
-              {/* Outer Pulsing Aura */}
-              <circle r="30" fill="#6366f1" fillOpacity="0.2" className="animate-ping" />
-              <circle r="18" fill="#6366f1" fillOpacity="0.4" stroke="#ffffff" strokeWidth="2" />
-              
-              {/* Target Pin Icon */}
-              <path
-                d="M 0 -18 C -8 -18 -14 -12 -14 -4 C -14 6 0 18 0 18 C 0 18 14 6 14 -4 C 14 -12 8 -18 0 -18 Z"
-                fill="#ec4899"
-                stroke="#ffffff"
-                strokeWidth="2"
-              />
-              <circle cy="-4" r="5" fill="#ffffff" />
-            </g>
-          )}
+          {/* Selected Pin Location Markers */}
+          {locations
+            .filter((loc) => loc.blueprintId === currentBlueprint.id)
+            .map((loc, idx) => (
+              <g key={idx} transform={`translate(${(loc.xPct / 100) * 1000}, ${(loc.yPct / 100) * 625})`}>
+                {/* Outer Pulsing Aura */}
+                <circle r="30" fill="#6366f1" fillOpacity="0.2" className="animate-ping" />
+                <circle r="18" fill="#6366f1" fillOpacity="0.4" stroke="#ffffff" strokeWidth="2" />
+                
+                {/* Target Pin Icon */}
+                <path
+                  d="M 0 -18 C -8 -18 -14 -12 -14 -4 C -14 6 0 18 0 18 C 0 18 14 6 14 -4 C 14 -12 8 -18 0 -18 Z"
+                  fill="#ec4899"
+                  stroke="#ffffff"
+                  strokeWidth="2"
+                />
+                <circle cy="-4" r="5" fill="#ffffff" />
+              </g>
+            ))}
         </svg>
 
         {/* Blueprint Helper Legend */}
@@ -301,16 +309,20 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
           <div>
             <span className="text-xs text-slate-400 block">Selected Map Coordinate</span>
             <span className="text-sm font-semibold text-slate-100">
-              {selectedLocation
-                ? `${selectedLocation.blueprintName}`
+              {locations.length > 0
+                ? locations.map((l) => l.blueprintName).join(', ')
                 : 'No point selected yet'}
             </span>
           </div>
         </div>
-        {selectedLocation && (
-          <span className="text-xs font-mono bg-indigo-950 text-indigo-200 border border-indigo-700/60 px-3 py-1 rounded-md">
-            X: {selectedLocation.xPct}% | Y: {selectedLocation.yPct}%
-          </span>
+        {locations.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {locations.map((l, i) => (
+              <span key={i} className="text-xs font-mono bg-indigo-950 text-indigo-200 border border-indigo-700/60 px-2.5 py-1 rounded-md">
+                {l.blueprintId}: {l.xPct}%, {l.yPct}%
+              </span>
+            ))}
+          </div>
         )}
       </div>
     </div>

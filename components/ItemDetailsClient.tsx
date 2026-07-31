@@ -11,7 +11,7 @@ interface ItemDetailsClientProps {
 }
 
 export default function ItemDetailsClient({ item }: ItemDetailsClientProps) {
-  const [selectedLocation, setSelectedLocation] = useState<PinLocation | null>(item.selectedLocation || null)
+  const [selectedLocation, setSelectedLocation] = useState<PinLocation[]>(item.selectedLocation || [])
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
@@ -127,37 +127,43 @@ export default function ItemDetailsClient({ item }: ItemDetailsClientProps) {
 
                 <div>
                   <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                    Assigned Location Details
+                    Assigned Location Details ({selectedLocation.length})
                   </h3>
-                  <div className="rounded-xl border border-slate-800 bg-slate-950/80 p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-lg bg-indigo-950 border border-indigo-800/60 flex items-center justify-center text-indigo-400">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <span className="text-sm font-semibold text-white block">
-                          {selectedLocation ? selectedLocation.blueprintName : 'Unassigned Location'}
-                        </span>
-                        <span className="text-xs text-slate-400 font-mono">
-                          {selectedLocation
-                            ? `Zone ID: ${selectedLocation.blueprintId}`
-                            : 'Not mapped to any warehouse zone'}
-                        </span>
-                      </div>
+                  {selectedLocation.length === 0 ? (
+                    <div className="rounded-xl border border-slate-800 bg-slate-950/80 p-4 text-sm text-slate-400">
+                      Unassigned Location - Not mapped to any warehouse zone
                     </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {selectedLocation.map((loc, idx) => (
+                        <div key={idx} className="rounded-xl border border-slate-800 bg-slate-950/80 p-4 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-lg bg-indigo-950 border border-indigo-800/60 flex items-center justify-center text-indigo-400">
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <span className="text-sm font-semibold text-white block">
+                                {loc.blueprintName}
+                              </span>
+                              <span className="text-xs text-slate-400 font-mono">
+                                Zone ID: {loc.blueprintId}
+                              </span>
+                            </div>
+                          </div>
 
-                    {selectedLocation && (
-                      <div className="text-right">
-                        <span className="text-[10px] text-slate-500 block uppercase font-mono">Coordinates</span>
-                        <span className="text-xs font-mono bg-indigo-950 text-indigo-300 border border-indigo-800/50 px-2.5 py-1 rounded">
-                          X: {selectedLocation.xPct}% | Y: {selectedLocation.yPct}%
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                          <div className="text-right">
+                            <span className="text-[10px] text-slate-500 block uppercase font-mono">Coordinates</span>
+                            <span className="text-xs font-mono bg-indigo-950 text-indigo-300 border border-indigo-800/50 px-2.5 py-1 rounded">
+                              X: {loc.xPct}% | Y: {loc.yPct}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -186,7 +192,7 @@ export default function ItemDetailsClient({ item }: ItemDetailsClientProps) {
 
           <WarehouseBlueprint
             selectedLocation={selectedLocation}
-            onSelectLocation={(loc) => setSelectedLocation(loc)}
+            onSelectLocation={(loc) => setSelectedLocation([...selectedLocation, loc])}
             displayOnly={true}
           />
         </div>
