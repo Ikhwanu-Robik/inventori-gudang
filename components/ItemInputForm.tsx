@@ -302,7 +302,7 @@ export default function ItemInputForm() {
           <WarehouseBlueprint
             selectedLocation={selectedLocation}
             onSelectLocation={(loc) => {
-              const newLoc = { ...loc, quantity: quantity || 1 }
+              const newLoc = { ...loc, quantity: quantity || 1, note: note || '' }
               setSelectedLocation([...selectedLocation, newLoc])
             }}
           />

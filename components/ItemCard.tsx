@@ -9,7 +9,6 @@ export interface InventoryItem {
   id: string
   itemName: string
   unit: string
-  note?: string
   imagePreview?: string | null
   selectedLocation?: PinLocation[] | null
 }
@@ -62,9 +61,9 @@ export default function ItemCard({ item }: ItemCardProps) {
           <h3 className="text-base font-bold text-white tracking-tight line-clamp-2 group-hover:text-indigo-300 transition-colors">
             {item.itemName}
           </h3>
-          {item.note && (
+          {item.selectedLocation?.[0]?.note && (
             <p className="text-xs text-slate-400 mt-1.5 line-clamp-2">
-              {item.note}
+              {item.selectedLocation[0].note}
             </p>
           )}
         </div>

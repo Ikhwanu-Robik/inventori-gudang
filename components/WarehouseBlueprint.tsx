@@ -8,6 +8,7 @@ export interface PinLocation {
   xPct: number
   yPct: number
   quantity: number
+  note?: string
 }
 
 interface BlueprintData {
@@ -79,6 +80,7 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
       xPct,
       yPct,
       quantity: 1,
+      note: '',
     })
   }
 
@@ -327,7 +329,7 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
           <div className="flex flex-wrap gap-1.5">
             {locations.map((l, i) => (
               <span key={i} className="text-xs font-mono bg-indigo-950 text-indigo-200 border border-indigo-700/60 px-2.5 py-1 rounded-md">
-                {l.blueprintId}: {l.xPct}%, {l.yPct}% (Qty: {l.quantity})
+                {l.blueprintId}: {l.xPct}%, {l.yPct}% (Qty: {l.quantity}){l.note ? (', ' + l.note) : ''}
               </span>
             ))}
           </div>
