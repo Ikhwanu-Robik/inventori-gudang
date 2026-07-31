@@ -45,9 +45,10 @@ const BLUEPRINTS: BlueprintData[] = [
 interface Props {
   selectedLocation: PinLocation | null
   onSelectLocation: (loc: PinLocation) => void
+  displayOnly: boolean
 }
 
-export default function WarehouseBlueprint({ selectedLocation, onSelectLocation }: Props) {
+export default function WarehouseBlueprint({ selectedLocation, onSelectLocation, displayOnly = false }: Props) {
   const [currentBlueprintIndex, setCurrentBlueprintIndex] = useState(0)
   const currentBlueprint = BLUEPRINTS[currentBlueprintIndex]
 
@@ -56,6 +57,8 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation 
   }
 
   const handleSvgClick = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (displayOnly) return
+
     const svg = e.currentTarget
     const rect = svg.getBoundingClientRect()
     const clickX = e.clientX - rect.left

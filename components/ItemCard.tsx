@@ -3,6 +3,7 @@
 import React from 'react'
 import { PinLocation } from './WarehouseBlueprint'
 import Image from 'next/image'
+import Link from 'next/link'
 
 export interface InventoryItem {
   id: string
@@ -20,7 +21,8 @@ interface ItemCardProps {
 
 export default function ItemCard({ item }: ItemCardProps) {
   return (
-    <div className="group rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl overflow-hidden shadow-xl hover:border-indigo-500/50 hover:shadow-indigo-500/10 transition-all duration-200 flex flex-col">
+    <Link href={`/items/${item.id}`} className="block group">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl overflow-hidden shadow-xl hover:border-indigo-500/50 hover:shadow-indigo-500/10 transition-all duration-200 flex flex-col h-full">
       {/* Item Image / Thumbnail Container */}
       <div className="relative w-full h-48 sm:h-52 bg-slate-950 overflow-hidden border-b border-slate-800/80">
         {item.imagePreview ? (
@@ -85,5 +87,6 @@ export default function ItemCard({ item }: ItemCardProps) {
         </div>
       </div>
     </div>
+    </Link>
   )
 }
