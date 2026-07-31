@@ -8,7 +8,6 @@ import Link from 'next/link'
 export interface InventoryItem {
   id: string
   itemName: string
-  quantity: number
   unit: string
   note?: string
   imagePreview?: string | null
@@ -20,6 +19,8 @@ interface ItemCardProps {
 }
 
 export default function ItemCard({ item }: ItemCardProps) {
+  const totalQuantity = item.selectedLocation?.reduce((acc, loc) => acc + loc.quantity, 0) || 0
+
   return (
     <Link href={`/items/${item.id}`} className="block group">
       <div className="rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-xl overflow-hidden shadow-xl hover:border-indigo-500/50 hover:shadow-indigo-500/10 transition-all duration-200 flex flex-col h-full">
@@ -51,7 +52,7 @@ export default function ItemCard({ item }: ItemCardProps) {
           </div>
         )}
         <div className="absolute top-3 right-3 rounded-lg bg-slate-900/80 backdrop-blur-md border border-slate-700/80 px-2.5 py-1 text-xs font-semibold text-slate-200 shadow">
-          {item.quantity} {item.unit}
+          {totalQuantity} {item.unit}
         </div>
       </div>
 

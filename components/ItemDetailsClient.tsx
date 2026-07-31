@@ -12,6 +12,7 @@ interface ItemDetailsClientProps {
 
 export default function ItemDetailsClient({ item }: ItemDetailsClientProps) {
   const [selectedLocation, setSelectedLocation] = useState<PinLocation[]>(item.selectedLocation || [])
+  const totalQuantity = selectedLocation.reduce((acc, loc) => acc + loc.quantity, 0)
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
@@ -91,13 +92,13 @@ export default function ItemDetailsClient({ item }: ItemDetailsClientProps) {
 
             <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 flex items-center justify-between">
               <div>
-                <span className="text-xs text-slate-400 block uppercase tracking-wider">Current Stock</span>
+                <span className="text-xs text-slate-400 block uppercase tracking-wider">Current Stock (Total)</span>
                 <span className="text-lg font-bold text-white">
-                  {item.quantity} <span className="text-indigo-400 font-medium text-sm">{item.unit}</span>
+                  {totalQuantity} <span className="text-indigo-400 font-medium text-sm">{item.unit}</span>
                 </span>
               </div>
               <div className="h-10 w-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold">
-                {item.quantity}
+                {totalQuantity}
               </div>
             </div>
           </div>
@@ -154,11 +155,19 @@ export default function ItemDetailsClient({ item }: ItemDetailsClientProps) {
                             </div>
                           </div>
 
-                          <div className="text-right">
-                            <span className="text-[10px] text-slate-500 block uppercase font-mono">Coordinates</span>
-                            <span className="text-xs font-mono bg-indigo-950 text-indigo-300 border border-indigo-800/50 px-2.5 py-1 rounded">
-                              X: {loc.xPct}% | Y: {loc.yPct}%
-                            </span>
+                          <div className="text-right flex items-center gap-3">
+                            <div>
+                              <span className="text-[10px] text-slate-500 block uppercase font-mono">Location Qty</span>
+                              <span className="text-xs font-semibold text-emerald-400">
+                                {loc.quantity} {item.unit}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-500 block uppercase font-mono">Coordinates</span>
+                              <span className="text-xs font-mono bg-indigo-950 text-indigo-300 border border-indigo-800/50 px-2.5 py-1 rounded">
+                                X: {loc.xPct}% | Y: {loc.yPct}%
+                              </span>
+                            </div>
                           </div>
                         </div>
                       ))}

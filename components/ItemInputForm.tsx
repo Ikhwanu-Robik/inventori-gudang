@@ -11,7 +11,7 @@ export default function ItemInputForm() {
   const [quantity, setQuantity] = useState<number>(1)
   const [unit, setUnit] = useState('pcs')
   const [note, setNote] = useState('')
-  const [selectedLocation, setSelectedLocation] = useState<PinLocation | null>(null)
+  const [selectedLocation, setSelectedLocation] = useState<PinLocation[]>([])
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -301,15 +301,18 @@ export default function ItemInputForm() {
           </label>
           <WarehouseBlueprint
             selectedLocation={selectedLocation}
-            onSelectLocation={(loc) => setSelectedLocation(loc)}
+            onSelectLocation={(loc) => {
+              const newLoc = { ...loc, quantity: quantity || 1 }
+              setSelectedLocation([...selectedLocation, newLoc])
+            }}
           />
         </div>
 
         {/* Submit Button Bar */}
         <div className="border-t border-slate-800 pt-5 flex items-center justify-between gap-4">
           <div className="text-xs text-slate-400 hidden sm:block">
-            {selectedLocation ? (
-              <span className="text-emerald-400 font-medium">✓ Location point selected</span>
+            {selectedLocation.length > 0 ? (
+              <span className="text-emerald-400 font-medium">✓ {selectedLocation.length} location point(s) selected</span>
             ) : (
               <span className="text-amber-400 font-medium">⚠ Please click a point on the blueprint</span>
             )}

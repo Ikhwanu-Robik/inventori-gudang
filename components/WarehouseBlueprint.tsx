@@ -7,6 +7,7 @@ export interface PinLocation {
   blueprintName: string
   xPct: number
   yPct: number
+  quantity: number
 }
 
 interface BlueprintData {
@@ -77,6 +78,7 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
       blueprintName: currentBlueprint.name,
       xPct,
       yPct,
+      quantity: 1,
     })
   }
 
@@ -288,6 +290,12 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
                   strokeWidth="2"
                 />
                 <circle cy="-4" r="5" fill="#ffffff" />
+
+                {/* Quantity Badge */}
+                <g transform="translate(0, -28)">
+                  <rect x="-18" y="-12" width="36" height="20" rx="4" fill="#0f172a" stroke="#ec4899" strokeWidth="1.5" />
+                  <text x="0" y="2" fill="#ffffff" fontSize="10" fontWeight="bold" textAnchor="middle">Qty: {loc.quantity}</text>
+                </g>
               </g>
             ))}
         </svg>
@@ -310,7 +318,7 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
             <span className="text-xs text-slate-400 block">Selected Map Coordinate</span>
             <span className="text-sm font-semibold text-slate-100">
               {locations.length > 0
-                ? locations.map((l) => l.blueprintName).join(', ')
+                ? locations.map((l) => `${l.blueprintName} (Qty: ${l.quantity})`).join(', ')
                 : 'No point selected yet'}
             </span>
           </div>
@@ -319,7 +327,7 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
           <div className="flex flex-wrap gap-1.5">
             {locations.map((l, i) => (
               <span key={i} className="text-xs font-mono bg-indigo-950 text-indigo-200 border border-indigo-700/60 px-2.5 py-1 rounded-md">
-                {l.blueprintId}: {l.xPct}%, {l.yPct}%
+                {l.blueprintId}: {l.xPct}%, {l.yPct}% (Qty: {l.quantity})
               </span>
             ))}
           </div>
