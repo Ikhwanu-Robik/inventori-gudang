@@ -46,7 +46,7 @@ const BLUEPRINTS: BlueprintData[] = [
 
 interface Props {
   selectedLocation: PinLocation | PinLocation[] | null
-  onSelectLocation: (loc: PinLocation) => void
+  onSelectLocation?: (loc: PinLocation) => void
   displayOnly?: boolean
 }
 
@@ -74,14 +74,16 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
     const xPct = Math.round((clickX / rect.width) * 100)
     const yPct = Math.round((clickY / rect.height) * 100)
 
-    onSelectLocation({
-      blueprintId: currentBlueprint.id,
-      blueprintName: currentBlueprint.name,
-      xPct,
-      yPct,
-      quantity: 1,
-      note: '',
-    })
+    if (onSelectLocation) {
+      onSelectLocation({
+        blueprintId: currentBlueprint.id,
+        blueprintName: currentBlueprint.name,
+        xPct,
+        yPct,
+        quantity: 1,
+        note: '',
+      })
+    }
   }
 
   return (
@@ -147,7 +149,7 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
       </div>
 
       {/* Interactive SVG Warehouse Blueprint Canvas */}
-      <div className="relative w-full aspect-[16/10] rounded-lg bg-slate-950 border border-slate-800 overflow-hidden select-none cursor-crosshair">
+      <div className={`relative w-full aspect-[16/10] rounded-lg bg-slate-950 border border-slate-800 overflow-hidden select-none ${displayOnly ? 'cursor-default' : 'cursor-crosshair'}`}>
         {/* Background Blueprint Grid */}
         <div
           className="absolute inset-0 opacity-20 pointer-events-none"
@@ -306,7 +308,7 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
         <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[11px] text-slate-400 bg-slate-900/90 backdrop-blur px-3 py-1.5 rounded border border-slate-800 pointer-events-none">
           <span className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-            Click anywhere on the SVG floorplan to mark location
+            {displayOnly ? 'Warehouse location markers (Read-only view)' : 'Click anywhere on the SVG floorplan to mark location'}
           </span>
           <span className="font-mono text-slate-500">SVG Map Layout</span>
         </div>
