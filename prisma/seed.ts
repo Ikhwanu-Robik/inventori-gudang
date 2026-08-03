@@ -1,77 +1,39 @@
-import { PinLocation } from '@/components/WarehouseBlueprint'
-
-export type MovementType = 'INBOUND' | 'OUTBOUND' | 'TRANSFER'
-
-export interface WarehouseBlueprintModel {
-  id: string
-  name: string
-  code: string
-  description?: string | null
-  svgPath: string
-  createdAt?: Date
-  updatedAt?: Date
+if (!process.env.DATABASE_URL) {
+  try {
+    process.loadEnvFile()
+  } catch {
+    // Ignore error
+  }
 }
 
-export interface ItemLocationModel {
-  id: string
-  itemId: string
-  blueprintId: string
-  xPct: number
-  yPct: number
-  quantity: number
-  note?: string | null
-  createdAt?: Date
-  updatedAt?: Date
-}
+import { prisma } from '../lib/prisma'
 
-export interface CreateItemLocationInput {
-  blueprintId: string
-  xPct: number
-  yPct: number
-  quantity: number
-  note?: string | null
-}
+const BLUEPRINTS = [
+  {
+    id: 'gudang-joglo',
+    name: 'Gudang-Joglo',
+    code: 'GDG-JGL',
+    description: 'Fasilitas gudang utama area Joglo dengan zona loading dock & rak barang',
+    svgPath: '/blueprints/gudang-joglo.svg',
+  },
+  {
+    id: 'gudang-selatan',
+    name: 'Gudang-Selatan',
+    code: 'GDG-SLT',
+    description: 'Fasilitas gudang cabang area Selatan dengan rak high-bay & pendingin',
+    svgPath: '/blueprints/gudang-selatan.svg',
+  },
+]
 
-export interface StockMovementRecord {
-  id: string
-  type: MovementType
-  itemId: string
-  itemLocationId?: string | null
-  blueprintId: string
-  quantity: number
-  unit: string
-  outboundNote?: string | null
-  createdAt?: Date
-}
-
-export interface CreateStockMovementInput {
-  type: MovementType
-  itemId: string
-  itemLocationId?: string | null
-  blueprintId: string
-  quantity: number
-  unit: string
-  outboundNote?: string | null
-}
-
-export interface InventoryItem {
-  id: string
-  itemName: string
-  unit: string
-  imagePreview?: string | null
-  selectedLocation?: PinLocation[] | null
-}
-
-export const INITIAL_ITEMS: InventoryItem[] = [
+const INITIAL_ITEMS_SEED = [
   {
     id: 'item-1',
     itemName: 'Industrial Hydraulic Pump Model-X',
     unit: 'pcs',
-    imagePreview: null,
-    selectedLocation: [
+    imageUrl: null,
+    locations: [
       {
         blueprintId: 'gudang-joglo',
-        blueprintName: 'Gudang-Joglo',
         xPct: 35,
         yPct: 45,
         quantity: 8,
@@ -79,7 +41,6 @@ export const INITIAL_ITEMS: InventoryItem[] = [
       },
       {
         blueprintId: 'gudang-selatan',
-        blueprintName: 'Gudang-Selatan',
         xPct: 60,
         yPct: 25,
         quantity: 4,
@@ -91,11 +52,10 @@ export const INITIAL_ITEMS: InventoryItem[] = [
     id: 'item-2',
     itemName: 'Heavy-Duty Steel Pallet Racks',
     unit: 'plt',
-    imagePreview: null,
-    selectedLocation: [
+    imageUrl: null,
+    locations: [
       {
         blueprintId: 'gudang-selatan',
-        blueprintName: 'Gudang-Selatan',
         xPct: 60,
         yPct: 30,
         quantity: 45,
@@ -107,11 +67,10 @@ export const INITIAL_ITEMS: InventoryItem[] = [
     id: 'item-3',
     itemName: 'Refrigerated Vaccine Storage Container',
     unit: 'boxes',
-    imagePreview: null,
-    selectedLocation: [
+    imageUrl: null,
+    locations: [
       {
         blueprintId: 'gudang-selatan',
-        blueprintName: 'Gudang-Selatan',
         xPct: 40,
         yPct: 55,
         quantity: 5,
@@ -119,7 +78,6 @@ export const INITIAL_ITEMS: InventoryItem[] = [
       },
       {
         blueprintId: 'gudang-joglo',
-        blueprintName: 'Gudang-Joglo',
         xPct: 50,
         yPct: 30,
         quantity: 3,
@@ -131,11 +89,10 @@ export const INITIAL_ITEMS: InventoryItem[] = [
     id: 'item-4',
     itemName: 'Precision Laser Sensor Unit',
     unit: 'units',
-    imagePreview: null,
-    selectedLocation: [
+    imageUrl: null,
+    locations: [
       {
         blueprintId: 'gudang-joglo',
-        blueprintName: 'Gudang-Joglo',
         xPct: 80,
         yPct: 70,
         quantity: 120,
@@ -147,11 +104,10 @@ export const INITIAL_ITEMS: InventoryItem[] = [
     id: 'item-5',
     itemName: 'Forklift Lithium Battery Pack 48V',
     unit: 'pcs',
-    imagePreview: null,
-    selectedLocation: [
+    imageUrl: null,
+    locations: [
       {
         blueprintId: 'gudang-selatan',
-        blueprintName: 'Gudang-Selatan',
         xPct: 25,
         yPct: 80,
         quantity: 5,
@@ -163,11 +119,10 @@ export const INITIAL_ITEMS: InventoryItem[] = [
     id: 'item-6',
     itemName: 'Insulated Thermal Shipping Blankets',
     unit: 'meters',
-    imagePreview: null,
-    selectedLocation: [
+    imageUrl: null,
+    locations: [
       {
         blueprintId: 'gudang-selatan',
-        blueprintName: 'Gudang-Selatan',
         xPct: 70,
         yPct: 40,
         quantity: 200,
@@ -175,7 +130,6 @@ export const INITIAL_ITEMS: InventoryItem[] = [
       },
       {
         blueprintId: 'gudang-selatan',
-        blueprintName: 'Gudang-Selatan',
         xPct: 30,
         yPct: 50,
         quantity: 100,
@@ -184,3 +138,52 @@ export const INITIAL_ITEMS: InventoryItem[] = [
     ],
   },
 ]
+
+async function main() {
+  console.log('Seeding warehouse blueprints...')
+  for (const bp of BLUEPRINTS) {
+    await prisma.warehouseBlueprint.upsert({
+      where: { id: bp.id },
+      update: bp,
+      create: bp,
+    })
+  }
+
+  console.log('Seeding initial inventory items and locations...')
+  for (const item of INITIAL_ITEMS_SEED) {
+    await prisma.item.upsert({
+      where: { id: item.id },
+      update: {
+        itemName: item.itemName,
+        unit: item.unit,
+        imageUrl: item.imageUrl,
+      },
+      create: {
+        id: item.id,
+        itemName: item.itemName,
+        unit: item.unit,
+        imageUrl: item.imageUrl,
+        locations: {
+          create: item.locations.map((loc) => ({
+            blueprintId: loc.blueprintId,
+            xPct: loc.xPct,
+            yPct: loc.yPct,
+            quantity: loc.quantity,
+            note: loc.note,
+          })),
+        },
+      },
+    })
+  }
+
+  console.log('Seed completed successfully.')
+}
+
+main()
+  .catch((e) => {
+    console.error(e)
+    process.exit(1)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
+  })

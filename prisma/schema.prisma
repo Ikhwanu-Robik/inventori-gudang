@@ -5,3 +5,71 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum MovementType {
+  INBOUND
+  OUTBOUND
+  TRANSFER
+}
+
+model WarehouseBlueprint {
+  id          String   @id
+  name        String
+  code        String   @unique
+  description String?
+  svgPath     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  locations ItemLocation[]
+}
+
+model Item {
+  id          String   @id @default(cuid())
+  itemName    String
+  unit        String   @default("pcs")
+  imageUrl    String?
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  locations ItemLocation[]
+  movements StockMovement[]
+}
+
+model ItemLocation {
+  id          String   @id @default(cuid())
+  itemId      String
+  blueprintId String
+  xPct        Float
+  yPct        Float
+  quantity    Float    @default(0)
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  item      Item               @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  blueprint WarehouseBlueprint @relation(fields: [blueprintId], references: [id], onDelete: Restrict)
+  movements StockMovement[]
+
+  @@index([itemId])
+  @@index([blueprintId])
+}
+
+model StockMovement {
+  id             String       @id @default(cuid())
+  type           MovementType @default(OUTBOUND)
+  itemId         String
+  itemLocationId String
+  quantity       Float
+  unit           String
+  note           String?
+  createdAt      DateTime     @default(now())
+
+  item      Item               @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  location  ItemLocation      @relation(fields: [itemLocationId], references: [id], onDelete: Restrict)
+
+  @@index([itemId])
+  @@index([itemLocationId])
+}
+
