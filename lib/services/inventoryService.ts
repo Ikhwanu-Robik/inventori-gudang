@@ -128,19 +128,16 @@ export async function createItem(data: CreateItemInput): Promise<InventoryItem> 
     })
 
     if (item.locations.length > 0) {
-      for (const loc of item.locations) {
-        await tx.stockMovement.create({
-          data: {
-            type: 'INBOUND',
-            itemId: item.id,
-            itemLocationId: loc.id,
-            blueprintId: loc.blueprintId,
-            quantity: loc.quantity,
-            unit: item.unit,
-            outboundNote: data.note || 'Initial stock entry',
-          },
-        })
-      }
+      await tx.stockMovement.createMany({
+        data: item.locations.map((loc) => ({
+          type: 'INBOUND',
+          itemId: item.id,
+          itemLocationId: loc.id,
+          quantity: loc.quantity,
+          unit: item.unit,
+          note: data.note || 'Initial stock entry',
+        })),
+      })
     }
 
     return item
