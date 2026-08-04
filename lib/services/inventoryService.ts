@@ -16,7 +16,7 @@ export interface RecordOutboundInput {
   yPct: number
   quantity: number
   unit: string
-  outboundNote?: string | null
+  note?: string | null
 }
 
 /**
@@ -200,10 +200,9 @@ export async function recordOutboundMovement(data: RecordOutboundInput) {
         type: 'OUTBOUND',
         itemId: data.itemId,
         itemLocationId: targetLocation.id,
-        blueprintId: data.blueprintId,
         quantity: data.quantity,
         unit: data.unit,
-        outboundNote: data.outboundNote || null,
+        note: data.note || null,
       },
     })
 
