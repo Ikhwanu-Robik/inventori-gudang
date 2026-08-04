@@ -5,14 +5,19 @@ import React, { useState, ChangeEvent } from 'react'
 import WarehouseBlueprint, { PinLocation } from './WarehouseBlueprint'
 
 export default function ItemInputForm() {
-  // Form Field States (Frontend only)
+  // Form Field States
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [itemName, setItemName] = useState('')
   const [quantity, setQuantity] = useState<number>(1)
   const [unit, setUnit] = useState('pcs')
   const [note, setNote] = useState('')
   const [selectedLocation, setSelectedLocation] = useState<PinLocation[]>([])
-  const [isSubmitted, setIsSubmitted] = useState(false)
+  
+  // Submission & Validation States
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  
   const [isDragging, setIsDragging] = useState(false)
 
   // Handle File Helper
@@ -60,13 +65,67 @@ export default function ItemInputForm() {
     setImagePreview(null)
   }
 
-  // Handle Form Submit (Frontend demonstration only)
-  const handleSubmit = (e: React.FormEvent) => {
+  // Handle Form Submit to Backend API
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setIsSubmitted(true)
-    setTimeout(() => {
-      setIsSubmitted(false)
-    }, 4000)
+    setSubmitError(null)
+    setSubmitSuccess(false)
+
+    if (!itemName.trim()) {
+      setSubmitError('Please enter an item name')
+      return
+    }
+
+    if (selectedLocation.length === 0) {
+      setSubmitError('Please select at least one location marker on the warehouse blueprint')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const res = await fetch('/api/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          itemName: itemName.trim(),
+          unit,
+          note: note.trim() || null,
+          imageUrl: imagePreview || null,
+          locations: selectedLocation.map((loc) => ({
+            blueprintId: loc.blueprintId,
+            xPct: loc.xPct,
+            yPct: loc.yPct,
+            quantity: loc.quantity || quantity || 1,
+            note: loc.note || note.trim() || null,
+          })),
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to save inventory item')
+      }
+
+      setSubmitSuccess(true)
+      // Reset form fields
+      setItemName('')
+      setQuantity(1)
+      setUnit('pcs')
+      setNote('')
+      setImagePreview(null)
+      setSelectedLocation([])
+
+      setTimeout(() => {
+        setSubmitSuccess(false)
+      }, 5000)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'An error occurred while saving item'
+      setSubmitError(msg)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -102,8 +161,8 @@ export default function ItemInputForm() {
       </div>
 
       {/* Submission Success Alert */}
-      {isSubmitted && (
-        <div className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-950/40 p-4 text-emerald-200 flex items-center justify-between animate-fadeIn">
+      {submitSuccess && (
+        <div className="mb-6 rounded-xl border border-emerald-500/40 bg-emerald-950/40 p-4 text-emerald-200 flex items-center justify-between animate-fadeIn">
           <div className="flex items-center gap-3">
             <svg
               className="w-5 h-5 text-emerald-400 flex-shrink-0"
@@ -119,16 +178,48 @@ export default function ItemInputForm() {
               />
             </svg>
             <div>
-              <p className="text-sm font-semibold">Form Submitted (Frontend Preview)</p>
+              <p className="text-sm font-semibold">Item Created Successfully!</p>
               <p className="text-xs text-emerald-300/80">
-                Item details captured successfully without backend action.
+                Item details and warehouse location pins have been saved to the database.
               </p>
             </div>
           </div>
           <button
             type="button"
-            onClick={() => setIsSubmitted(false)}
+            onClick={() => setSubmitSuccess(false)}
             className="text-xs bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 px-2.5 py-1 rounded"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Submission Error Alert */}
+      {submitError && (
+        <div className="mb-6 rounded-xl border border-rose-500/40 bg-rose-950/40 p-4 text-rose-200 flex items-center justify-between animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <svg
+              className="w-5 h-5 text-rose-400 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <div>
+              <p className="text-sm font-semibold">Error Creating Item</p>
+              <p className="text-xs text-rose-300/80">{submitError}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSubmitError(null)}
+            className="text-xs bg-rose-900/60 hover:bg-rose-800 text-rose-200 px-2.5 py-1 rounded"
           >
             Dismiss
           </button>
@@ -320,22 +411,32 @@ export default function ItemInputForm() {
 
           <button
             type="submit"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 active:from-indigo-700 active:to-indigo-600 text-white text-sm font-semibold px-8 py-3 transition-all duration-150 shadow-lg shadow-indigo-600/30 hover:shadow-indigo-500/50 cursor-pointer"
+            disabled={isSubmitting || selectedLocation.length === 0}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 active:from-indigo-700 active:to-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold px-8 py-3 transition-all duration-150 shadow-lg shadow-indigo-600/30 hover:shadow-indigo-500/50 cursor-pointer"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            Submit Item
+            {isSubmitting ? (
+              <>
+                <span className="inline-block h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                Submitting Item...
+              </>
+            ) : (
+              <>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                Submit Item
+              </>
+            )}
           </button>
         </div>
       </form>
