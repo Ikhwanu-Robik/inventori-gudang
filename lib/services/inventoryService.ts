@@ -25,16 +25,34 @@ export interface RecordOutboundInput {
  */
 export async function getAllItems(searchQuery?: string): Promise<InventoryItem[]> {
   const items = await prisma.item.findMany({
-    where: searchQuery
-      ? {
-          itemName: {
-            contains: searchQuery,
-            mode: 'insensitive',
+    where: {
+      AND: [
+        searchQuery
+          ? {
+              itemName: {
+                contains: searchQuery,
+                mode: 'insensitive',
+              },
+            }
+          : {},
+        {
+          locations: {
+            some: {
+              quantity: {
+                gt: 0,
+              },
+            },
           },
-        }
-      : undefined,
+        },
+      ],
+    },
     include: {
       locations: {
+        where: {
+          quantity: {
+            gt: 0,
+          },
+        },
         include: {
           blueprint: true,
         },
@@ -69,6 +87,11 @@ export async function getItemById(id: string): Promise<InventoryItem | null> {
     where: { id },
     include: {
       locations: {
+        where: {
+          quantity: {
+            gt: 0,
+          },
+        },
         include: {
           blueprint: true,
         },
