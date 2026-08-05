@@ -1,16 +1,56 @@
 'use client'
 
-import React, { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ItemCard from '@/components/ItemCard'
-import { InventoryItem, INITIAL_ITEMS } from '@/lib/inventory'
+import { InventoryItem } from '@/lib/inventory'
 
 export default function ItemsGridPage() {
-  const [items] = useState<InventoryItem[]>(INITIAL_ITEMS)
+  const [items, setItems] = useState<InventoryItem[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const filteredItems = items.filter((item) => 
-   item.itemName.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  useEffect(() => {
+    let isMounted = true
+    setIsLoading(true)
+    setError(null)
+
+    const fetchItems = async () => {
+      try {
+        const url = searchQuery.trim()
+          ? `/api/items?q=${encodeURIComponent(searchQuery.trim())}`
+          : '/api/items'
+        const res = await fetch(url)
+        const json = await res.json()
+
+        if (!res.ok || !json.success) {
+          throw new Error(json.error || 'Failed to load catalog items')
+        }
+
+        if (isMounted) {
+          setItems(json.data || [])
+        }
+      } catch (err: unknown) {
+        if (isMounted) {
+          const msg = err instanceof Error ? err.message : 'Error loading catalog'
+          setError(msg)
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    const timer = setTimeout(() => {
+      fetchItems()
+    }, 250)
+
+    return () => {
+      isMounted = false
+      clearTimeout(timer)
+    }
+  }, [searchQuery])
 
   return (
     <div className="flex-1 flex flex-col font-sans">
@@ -51,10 +91,37 @@ export default function ItemsGridPage() {
           </div>
         </div>
 
-        {/* Grid of Item Cards */}
-        {filteredItems.length > 0 ? (
+        {/* Error Notification */}
+        {error && (
+          <div className="rounded-xl border border-rose-500/40 bg-rose-950/40 p-4 text-rose-200 text-xs flex items-center justify-between">
+            <span>⚠ {error}</span>
+            <button
+              type="button"
+              onClick={() => setSearchQuery(searchQuery)}
+              className="bg-rose-900/60 hover:bg-rose-800 text-rose-100 px-2.5 py-1 rounded font-medium"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Grid / Loading State */}
+        {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredItems.map((item) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+              <div
+                key={n}
+                className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 space-y-4 animate-pulse"
+              >
+                <div className="w-full h-40 bg-slate-800/60 rounded-xl" />
+                <div className="h-4 bg-slate-800/80 rounded w-3/4" />
+                <div className="h-3 bg-slate-800/50 rounded w-1/2" />
+              </div>
+            ))}
+          </div>
+        ) : items.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {items.map((item) => (
               <ItemCard key={item.id} item={item} />
             ))}
           </div>
@@ -67,22 +134,28 @@ export default function ItemsGridPage() {
             </div>
             <h3 className="text-base font-semibold text-white">No items found</h3>
             <p className="text-xs text-slate-400 max-w-sm">
-              No inventory items matched &quot;<span className="text-indigo-400">{searchQuery}</span>&quot;. Try searching for a different name.
+              {searchQuery ? (
+                <>No inventory items matched &quot;<span className="text-indigo-400">{searchQuery}</span>&quot;. Try searching for a different name.</>
+              ) : (
+                'No inventory items have been created in the database yet.'
+              )}
             </p>
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="mt-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg transition-colors cursor-pointer"
-            >
-              Reset Search
-            </button>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="mt-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg transition-colors cursor-pointer"
+              >
+                Reset Search
+              </button>
+            )}
           </div>
         )}
       </main>
 
       {/* Footer */}
       <footer className="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
-        <p>Inventori Gudang System &copy; {new Date().getFullYear()} — Frontend Only Mode</p>
+        <p>Inventori Gudang System &copy; {new Date().getFullYear()} — Live Database Connected</p>
       </footer>
     </div>
   )
