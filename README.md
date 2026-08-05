@@ -44,7 +44,17 @@ The database schema consists of 4 main models:
 - **`ItemLocation`**: Stock allocation mapped to exact percentage coordinates `(xPct, yPct)` on a warehouse blueprint.
 - **`StockMovement`**: Transaction audit logs (`INBOUND`, `OUTBOUND`, `TRANSFER`) for stock movement history.
 
-For a detailed Entity Relationship Diagram (ERD) and model field specifications, see [docs/DATA_MODELS.md](./docs/DATA_MODELS.md).
+For a detailed Entity Relationship Diagram (ERD), model field specifications, and REST API contracts, see [docs/DATA_MODELS.md](./docs/DATA_MODELS.md).
+
+---
+
+## 🌐 REST API Endpoints
+
+- `GET /api/items?q=...` — Search & list inventory catalog items (filters out 0-stock locations and 0-total-stock items)
+- `POST /api/items` — Create new inventory item, pin location allocations, and log initial `INBOUND` stock movement
+- `GET /api/items/[id]` — Fetch item details and active location pins by ID
+- `POST /api/items/outbound` — Record outbound stock dispatch, subtract quantity, and create an `OUTBOUND` `StockMovement` audit record
+- `GET /api/blueprints` — Fetch master warehouse floorplan blueprints
 
 ---
 
@@ -105,6 +115,11 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ├── app/
 │   ├── layout.tsx             # Root layout & Navbar
 │   ├── page.tsx               # Dashboard / Quick Input
+│   ├── api/
+│   │   ├── blueprints/route.ts # GET blueprints
+│   │   ├── items/route.ts      # GET | POST items
+│   │   ├── items/[id]/route.ts      # GET items by [id]
+│   │   └── items/oubound/route.ts      # POST outbound item movement
 │   └── items/
 │       ├── page.tsx           # Inventory Catalog
 │       ├── [id]/page.tsx      # Item Details & Floorplan Map

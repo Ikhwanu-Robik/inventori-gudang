@@ -125,21 +125,54 @@ Records all stock inbound, outbound dispatches, and transfers.
 
 ---
 
-## 3. Database Commands & Seeding
+## 4. REST API Endpoints & Request Contracts
 
-- **Schema push**:
-  ```bash
-  npm run db:push
+### 4.1 `GET /api/items`
+- **Description**: Fetch catalog items (excludes items and location pins with `quantity: 0`).
+- **Query Params**: `?q=search_term` (optional name search filter).
+- **Response**: `{ "success": true, "data": InventoryItem[] }`
+
+### 4.2 `POST /api/items`
+- **Description**: Create a new catalog item, pin location allocations, and log `INBOUND` stock movement.
+- **Request Body**:
+  ```json
+  {
+    "itemName": "Industrial Hydraulic Pump Model-X",
+    "unit": "pcs",
+    "note": "Storage zone A1",
+    "imageUrl": "data:image/jpeg;base64,...",
+    "locations": [
+      {
+        "blueprintId": "gudang-joglo",
+        "xPct": 42.5,
+        "yPct": 58.0,
+        "quantity": 15,
+        "note": "Rack 4-B"
+      }
+    ]
+  }
   ```
-- **Generate Prisma Client**:
-  ```bash
-  npm run db:generate
+
+### 4.3 `GET /api/items/[id]`
+- **Description**: Fetch detailed item record by CUID primary key.
+- **Response**: `{ "success": true, "data": InventoryItem }` (or HTTP 404 if not found).
+
+### 4.4 `POST /api/items/outbound`
+- **Description**: Record outbound stock dispatch, subtract quantity from `ItemLocation`, and create an `OUTBOUND` `StockMovement` audit record.
+- **Request Body**:
+  ```json
+  {
+    "itemId": "cm6...",
+    "blueprintId": "gudang-joglo",
+    "xPct": 42.5,
+    "yPct": 58.0,
+    "quantity": 3,
+    "unit": "pcs",
+    "outboundNote": "Dispatched to Project Area-3"
+  }
   ```
-- **Seed database master data**:
-  ```bash
-  npm run db:seed
-  ```
-- **Open Prisma Studio UI**:
-  ```bash
-  npm run db:studio
-  ```
+
+### 4.5 `GET /api/blueprints`
+- **Description**: Fetch master warehouse floorplan blueprints.
+- **Response**: `{ "success": true, "data": WarehouseBlueprint[] }`
+
