@@ -1,11 +1,14 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { INITIAL_ITEMS, InventoryItem } from '@/lib/inventory'
+import { InventoryItem } from '@/lib/inventory'
 import WarehouseBlueprint, { PinLocation } from './WarehouseBlueprint'
 import Image from 'next/image'
 
 export default function OutboundForm() {
+  // Live Items & Form State
+  const [items, setItems] = useState<InventoryItem[]>([])
+  const [isLoadingItems, setIsLoadingItems] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
   const [selectedLocation, setSelectedLocation] = useState<PinLocation | null>(null)
@@ -13,12 +16,46 @@ export default function OutboundForm() {
   const [outboundQuantity, setOutboundQuantity] = useState<number>(1)
   const [outboundNote, setOutboundNote] = useState('')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false)
+
+  // API Submission & Alert States
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [lastDispatchedInfo, setLastDispatchedInfo] = useState<{
+    itemName: string
+    locationName: string
+    quantity: number
+    unit: string
+    note: string
+  } | null>(null)
 
   const dropdownRef = useRef<HTMLDivElement>(null)
 
+  // Fetch all items on mount for autocomplete
+  useEffect(() => {
+    let isMounted = true
+    const loadItems = async () => {
+      try {
+        setIsLoadingItems(true)
+        const res = await fetch('/api/items')
+        const json = await res.json()
+        if (res.ok && json.success && isMounted) {
+          setItems(json.data || [])
+        }
+      } catch {
+        // Silently handle load error
+      } finally {
+        if (isMounted) setIsLoadingItems(false)
+      }
+    }
+    loadItems()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   // Filter items for autocomplete
-  const filteredItems = INITIAL_ITEMS.filter((item) =>
+  const filteredItems = items.filter((item) =>
     item.itemName.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
@@ -45,13 +82,85 @@ export default function OutboundForm() {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Handle Form Submit to Backend API
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!selectedItem || !selectedLocation) return
-    setIsSubmitted(true)
-    setTimeout(() => {
-      setIsSubmitted(false)
-    }, 4000)
+    setSubmitError(null)
+    setSubmitSuccess(false)
+
+    if (!selectedItem || !selectedLocation) {
+      setSubmitError('Please select an item and a warehouse location marker')
+      return
+    }
+
+    if (outboundQuantity <= 0) {
+      setSubmitError('Outbound quantity must be greater than zero')
+      return
+    }
+
+    if (outboundQuantity > selectedLocation.quantity) {
+      setSubmitError(
+        `Outbound quantity (${outboundQuantity}) exceeds available stock (${selectedLocation.quantity} ${unit}) at this location`
+      )
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const res = await fetch('/api/items/outbound', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          itemId: selectedItem.id,
+          blueprintId: selectedLocation.blueprintId,
+          xPct: selectedLocation.xPct,
+          yPct: selectedLocation.yPct,
+          quantity: outboundQuantity,
+          unit: unit || selectedItem.unit,
+          outboundNote: outboundNote.trim() || null,
+        }),
+      })
+
+      const json = await res.json()
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Failed to record outbound movement')
+      }
+
+      setSubmitSuccess(true)
+      setLastDispatchedInfo({
+        itemName: selectedItem.itemName,
+        locationName: selectedLocation.blueprintName,
+        quantity: outboundQuantity,
+        unit: unit || selectedItem.unit,
+        note: outboundNote.trim() || 'N/A',
+      })
+
+      // Reset form state & refetch items to update stock levels
+      setSearchTerm('')
+      setSelectedItem(null)
+      setSelectedLocation(null)
+      setOutboundQuantity(1)
+      setOutboundNote('')
+      setUnit('')
+
+      // Refetch items list to reflect updated stock in autocomplete
+      const refetchRes = await fetch('/api/items')
+      const refetchJson = await refetchRes.json()
+      if (refetchRes.ok && refetchJson.success) {
+        setItems(refetchJson.data || [])
+      }
+
+      setTimeout(() => {
+        setSubmitSuccess(false)
+      }, 6000)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error recording outbound movement'
+      setSubmitError(msg)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -75,15 +184,49 @@ export default function OutboundForm() {
         </div>
       </div>
 
-      {isSubmitted && (
-        <div className="mb-6 rounded-xl border border-emerald-500/40 bg-emerald-950/40 p-4 text-emerald-300 text-sm flex items-center gap-3">
-          <svg className="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-          <div>
-            <span className="font-semibold block">Outbound Movement Recorded Successfully!</span>
-            <span className="text-xs text-emerald-400/80">Stock dispatched from {selectedLocation?.blueprintName} with note: &quot;{outboundNote || 'N/A'}&quot;.</span>
+      {/* Success Alert */}
+      {submitSuccess && lastDispatchedInfo && (
+        <div className="mb-6 rounded-xl border border-emerald-500/40 bg-emerald-950/40 p-4 text-emerald-300 text-sm flex items-center justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <svg className="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <div>
+              <span className="font-semibold block">Outbound Movement Recorded Successfully!</span>
+              <span className="text-xs text-emerald-400/80">
+                Dispatched {lastDispatchedInfo.quantity} {lastDispatchedInfo.unit} of &quot;{lastDispatchedInfo.itemName}&quot; from {lastDispatchedInfo.locationName} (Note: &quot;{lastDispatchedInfo.note}&quot;).
+              </span>
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={() => setSubmitSuccess(false)}
+            className="text-xs bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 px-2.5 py-1 rounded"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Error Alert */}
+      {submitError && (
+        <div className="mb-6 rounded-xl border border-rose-500/40 bg-rose-950/40 p-4 text-rose-200 text-sm flex items-center justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <svg className="w-5 h-5 text-rose-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <span className="font-semibold block">Failed to Record Outbound Movement</span>
+              <span className="text-xs text-rose-300/80">{submitError}</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSubmitError(null)}
+            className="text-xs bg-rose-900/60 hover:bg-rose-800 text-rose-200 px-2.5 py-1 rounded"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 
@@ -106,14 +249,18 @@ export default function OutboundForm() {
                 }
               }}
               onFocus={() => setIsDropdownOpen(true)}
-              placeholder="Type to search inventory items (e.g., Hydraulic Pump)..."
+              placeholder={isLoadingItems ? 'Loading inventory items from database...' : 'Type to search inventory items (e.g., Hydraulic Pump)...'}
               className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors outline-none"
               required
             />
             <div className="absolute right-3 top-3.5 text-slate-400 pointer-events-none">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              {isLoadingItems ? (
+                <span className="inline-block h-4 w-4 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              )}
             </div>
           </div>
 
@@ -270,10 +417,17 @@ export default function OutboundForm() {
 
           <button
             type="submit"
-            disabled={!selectedItem || !selectedLocation}
+            disabled={isSubmitting || !selectedItem || !selectedLocation}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 active:from-indigo-700 active:to-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold px-8 py-3 transition-all duration-150 shadow-lg shadow-indigo-600/30 cursor-pointer"
           >
-            Record Outbound Movement
+            {isSubmitting ? (
+              <>
+                <span className="inline-block h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                Recording Movement...
+              </>
+            ) : (
+              'Record Outbound Movement'
+            )}
           </button>
         </div>
       </form>
