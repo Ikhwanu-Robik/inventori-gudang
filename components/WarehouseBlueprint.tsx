@@ -20,7 +20,7 @@ interface BlueprintData {
   aspectRatio?: number
 }
 
-const BLUEPRINTS: BlueprintData[] = [
+const FALLBACK_BLUEPRINTS: BlueprintData[] = [
   {
     id: 'gudang-joglo',
     name: 'Gudang-Joglo',
@@ -49,12 +49,36 @@ const VIEW_WIDTH = 1000
 const MAX_HEIGHT_PX = 580
 
 export default function WarehouseBlueprint({ selectedLocation, onSelectLocation, displayOnly = false }: Props) {
+  const [blueprints, setBlueprints] = useState<BlueprintData[]>(FALLBACK_BLUEPRINTS)
   const [currentBlueprintIndex, setCurrentBlueprintIndex] = useState(0)
-  const currentBlueprint = BLUEPRINTS[currentBlueprintIndex]
+
+  // Fetch blueprints from database API
+  useEffect(() => {
+    let isMounted = true
+    const fetchBlueprints = async () => {
+      try {
+        const res = await fetch('/api/blueprints')
+        const json = await res.json()
+        if (res.ok && json.success && Array.isArray(json.data) && json.data.length > 0) {
+          if (isMounted) {
+            setBlueprints(json.data)
+          }
+        }
+      } catch {
+        // Fallback to FALLBACK_BLUEPRINTS on network error
+      }
+    }
+    fetchBlueprints()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const currentBlueprint = blueprints[currentBlueprintIndex] || blueprints[0] || FALLBACK_BLUEPRINTS[0]
 
   // Dynamic aspect ratio state (defaults to blueprint metadata or fallback 1.6)
   const [aspectRatio, setAspectRatio] = useState<number>(
-    currentBlueprint.aspectRatio || 1.6
+    currentBlueprint?.aspectRatio || 1.6
   )
 
   useEffect(() => {
@@ -89,7 +113,7 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
       : []
 
   const handleSwitchBlueprint = () => {
-    setCurrentBlueprintIndex((prev) => (prev + 1) % BLUEPRINTS.length)
+    setCurrentBlueprintIndex((prev) => (prev + 1) % blueprints.length)
   }
 
   const handleSvgClick = (e: React.MouseEvent<SVGSVGElement>) => {
@@ -157,7 +181,7 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
 
       {/* Blueprint Tabs */}
       <div className="flex flex-wrap gap-2">
-        {BLUEPRINTS.map((bp, idx) => {
+        {blueprints.map((bp, idx) => {
           const isActive = idx === currentBlueprintIndex
           return (
             <button
@@ -188,7 +212,7 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
         >
           {/* Background Blueprint Grid */}
           <div
-            className="absolute inset-0 opacity-20 pointer-events-none"
+            className="absolute inset-0 opacity-80 pointer-events-none"
             style={{
               backgroundImage: `linear-gradient(to right, rgba(99, 102, 241, 0.15) 1px, transparent 1px), linear-gradient(to bottom, rgba(99, 102, 241, 0.15) 1px, transparent 1px)`,
               backgroundSize: '25px 25px',
