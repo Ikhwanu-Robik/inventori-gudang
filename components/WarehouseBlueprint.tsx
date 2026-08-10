@@ -139,20 +139,20 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-slate-700/60 bg-slate-900/80 p-5 backdrop-blur-md shadow-xl text-slate-100">
+    <div className="flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900/80 p-5 backdrop-blur-md shadow-lg dark:shadow-xl text-slate-900 dark:text-slate-100 transition-colors duration-200">
       {/* Top Header & Switch Blueprint Button */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-indigo-400 animate-pulse" />
-            <h3 className="text-base font-semibold text-white tracking-wide">
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-indigo-500 dark:bg-indigo-400 animate-pulse" />
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white tracking-wide">
               {currentBlueprint.name}
             </h3>
-            <span className="rounded bg-slate-800 px-2 py-0.5 text-xs font-mono text-slate-400 border border-slate-700">
+            <span className="rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-mono text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
               {currentBlueprint.code}
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">{currentBlueprint.description}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{currentBlueprint.description}</p>
         </div>
 
         {/* Switch Warehouse Blueprint Button */}
@@ -190,8 +190,8 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
               onClick={() => setCurrentBlueprintIndex(idx)}
               className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors cursor-pointer ${
                 isActive
-                  ? 'border-indigo-500 bg-indigo-950/60 text-indigo-200'
-                  : 'border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-200 font-semibold'
+                  : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               {bp.name}
@@ -203,7 +203,7 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
       {/* Interactive SVG Warehouse Blueprint Canvas */}
       <div className="w-full flex justify-center">
         <div 
-          className={`relative w-full rounded-lg bg-slate-950 border border-slate-800 overflow-hidden select-none flex items-center justify-center ${displayOnly ? 'cursor-default' : 'cursor-crosshair'}`}
+          className={`relative w-full rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 overflow-hidden select-none flex items-center justify-center ${displayOnly ? 'cursor-default' : 'cursor-crosshair'}`}
           style={{
             aspectRatio: `${aspectRatio}`,
             maxHeight: `${MAX_HEIGHT_PX}px`,
@@ -212,9 +212,9 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
         >
           {/* Background Blueprint Grid */}
           <div
-            className="absolute inset-0 opacity-80 pointer-events-none"
+            className="absolute inset-0 opacity-40 dark:opacity-80 pointer-events-none"
             style={{
-              backgroundImage: `linear-gradient(to right, rgba(99, 102, 241, 0.15) 1px, transparent 1px), linear-gradient(to bottom, rgba(99, 102, 241, 0.15) 1px, transparent 1px)`,
+              backgroundImage: `linear-gradient(to right, rgba(99, 102, 241, 0.2) 1px, transparent 1px), linear-gradient(to bottom, rgba(99, 102, 241, 0.2) 1px, transparent 1px)`,
               backgroundSize: '25px 25px',
             }}
           />
@@ -267,12 +267,12 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
       </div>
 
       {/* Selected Location Coordinate Feedback */}
-      <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3 flex flex-wrap items-center justify-between gap-2">
+      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 p-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2.5">
           <div className="h-3 w-3 rounded-full bg-pink-500 flex-shrink-0 animate-pulse" />
           <div>
-            <span className="text-xs text-slate-400 block">Selected Map Coordinate</span>
-            <span className="text-sm font-semibold text-slate-100">
+            <span className="text-xs text-slate-500 dark:text-slate-400 block">Selected Map Coordinate</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               {locations.length > 0
                 ? locations.map((l) => `${l.blueprintName} (Qty: ${l.quantity})`).join(', ')
                 : 'No point selected yet'}
@@ -282,7 +282,7 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
         {locations.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {locations.map((l, i) => (
-              <span key={i} className="text-xs font-mono bg-indigo-950 text-indigo-200 border border-indigo-700/60 px-2.5 py-1 rounded-md">
+              <span key={i} className="text-xs font-mono bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-700/60 px-2.5 py-1 rounded-md">
                 {l.blueprintId}: {l.xPct}%, {l.yPct}% (Qty: {l.quantity}){l.note ? (', ' + l.note) : ''}
               </span>
             ))}
@@ -292,3 +292,4 @@ export default function WarehouseBlueprint({ selectedLocation, onSelectLocation,
     </div>
   )
 }
+

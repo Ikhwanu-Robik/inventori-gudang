@@ -17,30 +17,28 @@ export default function ItemDetailsClient({ item }: ItemDetailsClientProps) {
   return (
     <div className="flex-1 flex flex-col font-sans">
       {/* Main Content Area */}
-
-      {/* Main Content Area */}
       <main className="flex-1 py-10 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full space-y-8">
         {/* Breadcrumb / Back Link */}
         <div className="flex items-center justify-between">
           <Link
             href="/items"
-            className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-indigo-400 transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Back to Inventory Catalog
           </Link>
-          <span className="font-mono text-xs text-slate-500 bg-slate-900 px-3 py-1 rounded-full border border-slate-800">
+          <span className="font-mono text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-800">
             ID: {item.id}
           </span>
         </div>
 
         {/* Item Header & Details Card */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 rounded-2xl border border-slate-800 bg-slate-900/90 backdrop-blur-xl p-6 sm:p-8 shadow-2xl">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 backdrop-blur-xl p-6 sm:p-8 shadow-xl dark:shadow-2xl text-slate-900 dark:text-slate-100 transition-colors duration-200">
           {/* Image Container (Col 1-5) */}
           <div className="lg:col-span-5 flex flex-col gap-4">
-            <div className="relative w-full h-72 sm:h-80 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 shadow-inner flex items-center justify-center">
+            <div className="relative w-full h-72 sm:h-80 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-950 shadow-inner flex items-center justify-center">
               {item.imagePreview ? (
                 <Image
                   src={item.imagePreview}
@@ -49,9 +47,9 @@ export default function ItemDetailsClient({ item }: ItemDetailsClientProps) {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950/80 text-slate-600">
+                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-950/80 text-slate-400 dark:text-slate-600">
                   <svg
-                    className="w-16 h-16 mb-3 text-slate-700"
+                    className="w-16 h-16 mb-3 text-slate-400 dark:text-slate-700"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -68,14 +66,14 @@ export default function ItemDetailsClient({ item }: ItemDetailsClientProps) {
               )}
             </div>
 
-            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 flex items-center justify-between">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 p-4 flex items-center justify-between">
               <div>
-                <span className="text-xs text-slate-400 block uppercase tracking-wider">Current Stock (Total)</span>
-                <span className="text-lg font-bold text-white">
-                  {totalQuantity} <span className="text-indigo-400 font-medium text-sm">{item.unit}</span>
+                <span className="text-xs text-slate-600 dark:text-slate-400 block uppercase tracking-wider font-semibold">Current Stock (Total)</span>
+                <span className="text-lg font-bold text-slate-900 dark:text-white">
+                  {totalQuantity} <span className="text-indigo-600 dark:text-indigo-400 font-semibold text-sm">{item.unit}</span>
                 </span>
               </div>
-              <div className="h-10 w-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold">
+              <div className="h-10 w-10 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">
                 {totalQuantity}
               </div>
             </div>
@@ -85,41 +83,41 @@ export default function ItemDetailsClient({ item }: ItemDetailsClientProps) {
           <div className="lg:col-span-7 flex flex-col justify-between space-y-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-widest">
+                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
                   Active Inventory Item
                 </span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {item.itemName}
               </h2>
 
               <div className="mt-6 space-y-4">
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                  <h3 className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                     Assigned Location Details ({selectedLocation.length})
                   </h3>
                   {selectedLocation.length === 0 ? (
-                    <div className="rounded-xl border border-slate-800 bg-slate-950/80 p-4 text-sm text-slate-400">
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 p-4 text-sm text-slate-600 dark:text-slate-400">
                       Unassigned Location - Not mapped to any warehouse zone
                     </div>
                   ) : (
                     <div className="space-y-3">
                       {selectedLocation.map((loc, idx) => (
-                        <div key={idx} className="rounded-xl border border-slate-800 bg-slate-950/80 p-4 space-y-3">
+                        <div key={idx} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 p-4 space-y-3">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="h-9 w-9 rounded-lg bg-indigo-950 border border-indigo-800/60 flex items-center justify-center text-indigo-400">
+                              <div className="h-9 w-9 rounded-lg bg-indigo-50 dark:bg-indigo-950 border border-indigo-200 dark:border-indigo-800/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                               </div>
                               <div>
-                                <span className="text-sm font-semibold text-white block">
+                                <span className="text-sm font-semibold text-slate-900 dark:text-white block">
                                   {loc.blueprintName}
                                 </span>
-                                <span className="text-xs text-slate-400 font-mono">
+                                <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                                   Zone ID: {loc.blueprintId}
                                 </span>
                               </div>
@@ -128,20 +126,20 @@ export default function ItemDetailsClient({ item }: ItemDetailsClientProps) {
                             <div className="text-right flex items-center gap-3">
                               <div>
                                 <span className="text-[10px] text-slate-500 block uppercase font-mono">Location Qty</span>
-                                <span className="text-xs font-semibold text-emerald-400">
+                                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                                   {loc.quantity} {item.unit}
                                 </span>
                               </div>
                               <div>
                                 <span className="text-[10px] text-slate-500 block uppercase font-mono">Coordinates</span>
-                                <span className="text-xs font-mono bg-indigo-950 text-indigo-300 border border-indigo-800/50 px-2.5 py-1 rounded">
+                                <span className="text-xs font-mono bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/50 px-2.5 py-1 rounded">
                                   X: {loc.xPct}% | Y: {loc.yPct}%
                                 </span>
                               </div>
                             </div>
                           </div>
                           {loc.note && (
-                            <div className="text-xs text-slate-300 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+                            <div className="text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900/80 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
                               <span className="text-slate-500 font-semibold block mb-0.5 text-[10px] uppercase">Location Note:</span>
                               {loc.note}
                             </div>
@@ -154,7 +152,7 @@ export default function ItemDetailsClient({ item }: ItemDetailsClientProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 pt-4 border-t border-slate-800">
+            <div className="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
               <Link
                 href="/items"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-5 py-2.5 transition-all shadow-md shadow-indigo-600/25"
@@ -169,8 +167,8 @@ export default function ItemDetailsClient({ item }: ItemDetailsClientProps) {
         <div className="space-y-4 pt-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-bold text-white tracking-tight">Warehouse Floorplan & Pin Location</h3>
-              <p className="text-xs text-slate-400">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Warehouse Floorplan & Pin Location</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Visualizing item location on the warehouse zone blueprint. Click to update pin location.
               </p>
             </div>
@@ -185,9 +183,10 @@ export default function ItemDetailsClient({ item }: ItemDetailsClientProps) {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
+      <footer className="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-xs text-slate-500">
         <p>Inventori Gudang System &copy; {new Date().getFullYear()} — Frontend Only Mode</p>
       </footer>
     </div>
   )
 }
+

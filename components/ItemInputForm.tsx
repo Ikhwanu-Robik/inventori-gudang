@@ -129,11 +129,11 @@ export default function ItemInputForm() {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto rounded-2xl border border-slate-800 bg-slate-900/90 backdrop-blur-xl shadow-2xl p-6 sm:p-8 text-slate-100">
+    <div className="w-full max-w-4xl mx-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 backdrop-blur-xl shadow-xl dark:shadow-2xl p-6 sm:p-8 text-slate-900 dark:text-slate-100 transition-colors duration-200">
       {/* Form Header */}
-      <div className="border-b border-slate-800 pb-5 mb-6">
+      <div className="border-b border-slate-200 dark:border-slate-800 pb-5 mb-6">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+          <div className="h-10 w-10 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
             <svg
               className="w-6 h-6"
               fill="none"
@@ -150,10 +150,10 @@ export default function ItemInputForm() {
             </svg>
           </div>
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
               Add New Inventory Item
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
               Input item details and pick a location on the warehouse zone blueprint.
             </p>
           </div>
@@ -162,10 +162,10 @@ export default function ItemInputForm() {
 
       {/* Submission Success Alert */}
       {submitSuccess && (
-        <div className="mb-6 rounded-xl border border-emerald-500/40 bg-emerald-950/40 p-4 text-emerald-200 flex items-center justify-between animate-fadeIn">
+        <div className="mb-6 rounded-xl border border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/40 p-4 text-emerald-800 dark:text-emerald-200 flex items-center justify-between animate-fadeIn">
           <div className="flex items-center gap-3">
             <svg
-              className="w-5 h-5 text-emerald-400 flex-shrink-0"
+              className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -179,7 +179,7 @@ export default function ItemInputForm() {
             </svg>
             <div>
               <p className="text-sm font-semibold">Item Created Successfully!</p>
-              <p className="text-xs text-emerald-300/80">
+              <p className="text-xs text-emerald-700 dark:text-emerald-300/80">
                 Item details and warehouse location pins have been saved to the database.
               </p>
             </div>
@@ -187,7 +187,7 @@ export default function ItemInputForm() {
           <button
             type="button"
             onClick={() => setSubmitSuccess(false)}
-            className="text-xs bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 px-2.5 py-1 rounded"
+            className="text-xs bg-emerald-200 dark:bg-emerald-900/60 hover:bg-emerald-300 dark:hover:bg-emerald-800 text-emerald-900 dark:text-emerald-200 px-2.5 py-1 rounded font-medium cursor-pointer"
           >
             Dismiss
           </button>
@@ -196,10 +196,10 @@ export default function ItemInputForm() {
 
       {/* Submission Error Alert */}
       {submitError && (
-        <div className="mb-6 rounded-xl border border-rose-500/40 bg-rose-950/40 p-4 text-rose-200 flex items-center justify-between animate-fadeIn">
+        <div className="mb-6 rounded-xl border border-rose-300 dark:border-rose-500/40 bg-rose-50 dark:bg-rose-950/40 p-4 text-rose-800 dark:text-rose-200 flex items-center justify-between animate-fadeIn">
           <div className="flex items-center gap-3">
             <svg
-              className="w-5 h-5 text-rose-400 flex-shrink-0"
+              className="w-5 h-5 text-rose-600 dark:text-rose-400 flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -213,13 +213,13 @@ export default function ItemInputForm() {
             </svg>
             <div>
               <p className="text-sm font-semibold">Error Creating Item</p>
-              <p className="text-xs text-rose-300/80">{submitError}</p>
+              <p className="text-xs text-rose-700 dark:text-rose-300/80">{submitError}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setSubmitError(null)}
-            className="text-xs bg-rose-900/60 hover:bg-rose-800 text-rose-200 px-2.5 py-1 rounded"
+            className="text-xs bg-rose-200 dark:bg-rose-900/60 hover:bg-rose-300 dark:hover:bg-rose-800 text-rose-900 dark:text-rose-200 px-2.5 py-1 rounded font-medium cursor-pointer"
           >
             Dismiss
           </button>
@@ -231,12 +231,12 @@ export default function ItemInputForm() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Image Input (Column 1-5) */}
           <div className="md:col-span-5 flex flex-col gap-2">
-            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               Item Image
             </label>
 
             {imagePreview ? (
-              <div className="relative group w-full h-48 sm:h-56 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 flex items-center justify-center">
+              <div className="relative group w-full h-48 sm:h-56 rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-950 flex items-center justify-center">
                 <Image
                   src={imagePreview}
                   alt="Item Preview"
@@ -260,12 +260,12 @@ export default function ItemInputForm() {
                  onDrop={handleDrop}
                  className={`relative flex flex-col items-center justify-center w-full h-48 sm:h-56 border-2 border-dashed rounded-xl cursor-pointer transition-colors duration-150 group ${
                    isDragging
-                     ? 'border-indigo-400 bg-indigo-950/40'
-                     : 'border-slate-700 hover:border-indigo-500 bg-slate-950/50 hover:bg-slate-950'
+                     ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40'
+                     : 'border-slate-300 dark:border-slate-700 hover:border-indigo-500 bg-slate-50 dark:bg-slate-950/50 hover:bg-slate-100 dark:hover:bg-slate-950'
                  }`}
                >
                 <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
-                  <div className="h-10 w-10 mb-3 rounded-full bg-slate-800 group-hover:bg-indigo-900/50 flex items-center justify-center text-slate-400 group-hover:text-indigo-400 transition-colors">
+                  <div className="h-10 w-10 mb-3 rounded-full bg-slate-200 dark:bg-slate-800 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/50 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     <svg
                       className="w-6 h-6"
                       fill="none"
@@ -280,10 +280,10 @@ export default function ItemInputForm() {
                       />
                     </svg>
                   </div>
-                  <p className="mb-1 text-xs sm:text-sm text-slate-300 font-medium">
-                      <span className="text-indigo-400">Click to upload</span> or drag and drop
+                  <p className="mb-1 text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium">
+                      <span className="text-indigo-600 dark:text-indigo-400">Click to upload</span> or drag and drop
                   </p>
-                  <p className="text-[11px] text-slate-500">PNG, JPG, WEBP up to 5MB</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-500">PNG, JPG, WEBP up to 5MB</p>
                 </div>
                 <input
                   type="file"
@@ -299,8 +299,8 @@ export default function ItemInputForm() {
           <div className="md:col-span-7 flex flex-col gap-4">
             {/* Name Input */}
             <div>
-              <label htmlFor="itemName" className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-1.5">
-                Item Name <span className="text-rose-400">*</span>
+              <label htmlFor="itemName" className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1.5">
+                Item Name <span className="text-rose-500 dark:text-rose-400">*</span>
               </label>
               <input
                 id="itemName"
@@ -309,7 +309,7 @@ export default function ItemInputForm() {
                 onChange={(e) => setItemName(e.target.value)}
                 placeholder="e.g. Industrial Hydraulic Pump Model-X"
                 required
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors outline-none"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors outline-none"
               />
             </div>
 
@@ -317,14 +317,14 @@ export default function ItemInputForm() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Quantity Input with Stepper */}
               <div>
-                <label htmlFor="quantity" className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-1.5">
-                  Quantity <span className="text-rose-400">*</span>
+                <label htmlFor="quantity" className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1.5">
+                  Quantity <span className="text-rose-500 dark:text-rose-400">*</span>
                 </label>
-                <div className="flex items-center rounded-xl border border-slate-700 bg-slate-950 overflow-hidden focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500">
+                <div className="flex items-center rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 overflow-hidden focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500">
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                    className="px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     -
                   </button>
@@ -334,12 +334,12 @@ export default function ItemInputForm() {
                     min="1"
                     value={quantity}
                     onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-full text-center bg-transparent text-sm text-white font-medium outline-none py-2.5"
+                    className="w-full text-center bg-transparent text-sm text-slate-900 dark:text-white font-medium outline-none py-2.5"
                   />
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => q + 1)}
-                    className="px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                    className="px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     +
                   </button>
@@ -348,14 +348,14 @@ export default function ItemInputForm() {
 
               {/* Unit of Quantity Input */}
               <div>
-                <label htmlFor="unit" className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-1.5">
-                  Unit of Quantity <span className="text-rose-400">*</span>
+                <label htmlFor="unit" className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1.5">
+                  Unit of Quantity <span className="text-rose-500 dark:text-rose-400">*</span>
                 </label>
                 <select
                   id="unit"
                   value={unit}
                   onChange={(e) => setUnit(e.target.value)}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors outline-none cursor-pointer"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors outline-none cursor-pointer"
                 >
                   <option value="pcs">Pieces (pcs)</option>
                   <option value="boxes">Boxes (box)</option>
@@ -370,7 +370,7 @@ export default function ItemInputForm() {
 
             {/* Note Textbox */}
             <div>
-              <label htmlFor="note" className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-1.5">
+              <label htmlFor="note" className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1.5">
                 Note / Description
               </label>
               <textarea
@@ -379,7 +379,7 @@ export default function ItemInputForm() {
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Optional storage instructions, serial numbers, or batch tags..."
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors outline-none resize-none"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors outline-none resize-none"
               />
             </div>
           </div>
@@ -387,7 +387,7 @@ export default function ItemInputForm() {
 
         {/* Warehouse Blueprint Location Selector */}
         <div className="pt-2">
-          <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-2">
+          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-2">
             Location Input (Click an area on the warehouse blueprint)
           </label>
           <WarehouseBlueprint
@@ -400,12 +400,12 @@ export default function ItemInputForm() {
         </div>
 
         {/* Submit Button Bar */}
-        <div className="border-t border-slate-800 pt-5 flex items-center justify-between gap-4">
-          <div className="text-xs text-slate-400 hidden sm:block">
+        <div className="border-t border-slate-200 dark:border-slate-800 pt-5 flex items-center justify-between gap-4">
+          <div className="text-xs text-slate-600 dark:text-slate-400 hidden sm:block">
             {selectedLocation.length > 0 ? (
-              <span className="text-emerald-400 font-medium">✓ {selectedLocation.length} location point(s) selected</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">✓ {selectedLocation.length} location point(s) selected</span>
             ) : (
-              <span className="text-amber-400 font-medium">⚠ Please click a point on the blueprint</span>
+              <span className="text-amber-600 dark:text-amber-400 font-semibold">⚠ Please click a point on the blueprint</span>
             )}
           </div>
 
@@ -443,3 +443,4 @@ export default function ItemInputForm() {
     </div>
   )
 }
+
